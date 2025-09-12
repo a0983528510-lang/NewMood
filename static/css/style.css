@@ -167,3 +167,51 @@ textarea { resize:vertical; }
   position:absolute; inset:0; border:none; background:transparent; 
   display:block;
 }
+
+/* === Polaroid 微調：Title避開圖片 + 底部留白可寫字 === */
+
+/* 讓上方 Title 更貼近卡片上緣，並把相片區往下讓出空間 */
+.polaroid.instax-mini .band.top{
+  top: 3%;          /* 原本較靠下 → 往上 */
+  height: 8%;
+  padding: 0 12px;
+  line-height: 1.15;
+}
+.polaroid.instax-mini .band.top span{
+  display: inline-block;
+  max-width: 92%;
+  background: #fff; /* 確保字不會壓到相片時看不清 */
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 相片視窗：下方留白固定約 1/4 高度可供書寫 */
+.polaroid.instax-mini .photo{
+  position: absolute;
+  left: 7.4%;
+  right: 7.4%;
+  top: 10%;         /* 原 7% → 往下，避免撞到 Title */
+  bottom: 25%;      /* 留白約 1/4 高度 */
+  background: #f3f3f3 center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+}
+
+/* 下方文字帶：落在留白區之中，方便輸入較多文字 */
+.polaroid.instax-mini .band.bottom{
+  bottom: 10%;      /* 放在留白區內部 */
+  height: 16%;
+  padding: 0 10px;
+  align-items: flex-start;
+}
+.polaroid.instax-mini .band.bottom span{
+  max-width: 96%;
+  font-size: 13px;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+/* 舞台上邊再多留一點空間（避免整張卡片頂到頁面標題） */
+.polaroid-stage{
+  margin: 48px 0 24px;
+}
