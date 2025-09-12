@@ -1,72 +1,146 @@
 {% extends 'base.html' %}
 {% block content %}
-  <div class="sticky-wrap">
-    <div class="sticky yellow">
-      <h2>Post one track, get one back.</h2>
-      {% if not user %}
-      <p>Login to post your song and draw a random pick from others.</p>
-      <a class="btn" href="{{ url_for('login') }}">Login with Google</a>
-      {% else %}
-      <form id="post-form" method="post" action="{{ url_for('submit') }}">
-        <label>Song title</label>
-        <input type="text" name="title" required placeholder="e.g., Plastic Love" />
-        <label>Artist</label>
-        <input type="text" name="artist" required placeholder="e.g., Mariya Takeuchi" />
-        <label>Why do you recommend it? (optional)</label>
-        <textarea name="reason" rows="3" placeholder="Short reason..."></textarea>
-        <label>Link (YouTube/Spotify)</label>
-        <input type="url" name="link" placeholder="https://..." />
-        <button class="btn" type="submit" onclick="gtag && gtag('event','post_and_draw_clicked')">Post & Draw</button>
-      </form>
-      <div id="draw-result" class="draw-area" style="display:none;"></div>
-      {% endif %}
+  <!-- Polaroid Preview Stage -->
+  <div class="polaroid-stage">
+    <div class="polaroid-container">
+      <div class="polaroid" id="preview-polaroid">
+        <div class="polaroid-face back">
+          <div class="back-content">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NewMood logo" class="back-logo" />
+            <div class="back-text">NewMood</div>
+          </div>
+        </div>
+        <div class="polaroid-face front">
+          <div class="cover" id="preview-cover">
+            <span class="cover-icon" id="cover-icon">🎵</span>
+          </div>
+          <div class="info">
+            <div class="title-artist" id="preview-title-artist">等待自動帶入…</div>
+            <div class="play-link" id="preview-link" style="display:none;"></div>
+            <div class="reason" id="preview-reason"></div>
+            <div class="signer" id="preview-signer"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  {% if not user %}
+    <div class="sticky-wrap"><div class="sticky yellow">
+      <p>Login to post your song and draw a random pick from others.</p>
+      <a class="btn" href="{{ url_for('login') }}">Login with Google</a>
+    </div></div>
+  {% else %}
+    <div class="sticky-wrap"><div class="sticky blue">
+      <form id="post-form" method="post" action="{{ url_for('submit') }}">
+        <label>Link (YouTube/Spotify)</label>
+        <input type="url" name="link" id="input-link" placeholder="https://..." />
+        <button class="btn small" type="button" id="btn-autofill">AutoFill</button>
+
+        <label>Song title</label>
+        <input type="text" name="title" id="input-title" required placeholder="e.g., Plastic Love" />
+
+        <label>Artist</label>
+        <input type="text" name="artist" id="input-artist" required placeholder="e.g., Mariya Takeuchi" />
+
+        <label>Why do you recommend it? (optional)</label>
+        <textarea name="reason" id="input-reason" rows="3" placeholder="Short reason..."></textarea>
+
+        <button class="btn" type="submit">Post & Draw</button>
+      </form>
+      <div id="draw-result" class="draw-area" style="display:none;"></div>
+    </div></div>
+  {% endif %}
+
   <script>
-    // Handle the post form submission and display the drawn recommendation as a
-    // Polaroid card.  When a recommendation is drawn the card first shows
-    // its back (featuring the NewMood logo) then flips over to reveal the
-    // track details.
-    const form = document.getElementById('post-form');
-    const result = document.getElementById('draw-result');
+    const $ = (s) => document.querySelector(s);
+    const form = $('#post-form');
+    const linkInput = $('#input-link');
+    const titleInput = $('#input-title');
+    const artistInput = $('#input-artist');
+    const reasonInput = $('#input-reason');
+
+    // Polaroid preview elements
+    const preview = $('#preview-polaroid');
+    const previewCover = $('#preview-cover');
+    const coverIcon = $('#cover-icon');
+    const previewTA = $('#preview-title-artist');
+    const previewLink = $('#preview-link');
+    const previewReason = $('#preview-reason');
+    const previewSigner = $('#preview-signer');
+
+    async function doAutofill() {
+      const link = (linkInput.value || '').trim();
+      if (!link) { alert('請先貼上連結'); return; }
+      const resp = await fetch('{{ url_for("autofill") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({link})
+      });
+      const data = await resp.json();
+      if (!data.ok) { alert(data.error || 'AutoFill 失敗'); return; }
+      const m = data.meta || {};
+      if (m.title) titleInput.value = m.title;
+      if (m.artist) artistInput.value = m.artist;
+
+      // 預覽更新
+      if (m.thumbnail) {
+        previewCover.style.backgroundImage = `url('${m.thumbnail}')`;
+        coverIcon.style.display = 'none';
+      } else {
+        previewCover.style.backgroundImage = '';
+        coverIcon.style.display = '';
+      }
+      previewTA.textContent = `${titleInput.value || '(無標題)'} — ${artistInput.value || '(無歌手)'}`;
+      if (link) {
+        previewLink.style.display = 'block';
+        previewLink.innerHTML = `<a href="${link}" target="_blank">Play</a>`;
+      }
+
+      // 抽卡體驗：背面 → 翻面
+      preview.classList.remove('flip');
+      setTimeout(() => preview.classList.add('flip'), 200);
+    }
+
+    $('#btn-autofill')?.addEventListener('click', doAutofill);
+    linkInput?.addEventListener('change', doAutofill);
+    reasonInput?.addEventListener('input', () => {
+      previewReason.textContent = reasonInput.value || '';
+    });
+
+    // 送出並顯示抽到的拍立得（先背面後翻）
     if (form) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(form);
         const resp = await fetch(form.action, {method: 'POST', body: fd});
         const data = await resp.json();
-        if (!data.ok) {
-          alert(data.error || 'Error');
-          return;
-        }
-        // Reset form regardless of draw outcome
-        form.reset();
+        if (!data.ok) { alert(data.error || 'Error'); return; }
+
+        const result = document.getElementById('draw-result');
+        result.style.display = 'block';
+
         if (data.drawn) {
-          // Build the Polaroid markup.  Use template literals to insert
-          // dynamic values safely.  Escape text with innerText assignment to
-          // avoid HTML injection, but here assume trusted data.
           const drawn = data.drawn;
-          result.style.display = 'block';
-          // Build front face content: title, artist, optional link and reason,
-          // plus signature (nickname) if available.
-          const titleArtist = `<strong>${drawn.title}</strong> — ${drawn.artist}`;
           const linkPart = drawn.link ? `<div class="play-link"><a href="${drawn.link}" target="_blank">Play</a></div>` : '';
           const reasonPart = drawn.reason ? `<div class="reason">${drawn.reason}</div>` : '';
           const signerPart = drawn.nickname ? `<div class="signer">— ${drawn.nickname}</div>` : '';
+
           result.innerHTML = `
             <div class="polaroid-container">
               <div class="polaroid" id="draw-polaroid">
                 <div class="polaroid-face back">
                   <div class="back-content">
-                    <img src="/static/images/logo.png" alt="NewMood logo" class="back-logo" />
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" class="back-logo" />
                     <div class="back-text">NewMood</div>
                   </div>
                 </div>
                 <div class="polaroid-face front">
-                  <div class="cover"><span class="cover-icon">🎵</span></div>
+                  <div class="cover" style="background-image:${drawn.thumbnail ? `url('${drawn.thumbnail}')` : 'none'}">
+                    ${drawn.thumbnail ? '' : '<span class="cover-icon">🎵</span>'}
+                  </div>
                   <div class="info">
-                    <div class="title-artist">${titleArtist}</div>
+                    <div class="title-artist"><strong>${drawn.title}</strong> — ${drawn.artist}</div>
                     ${linkPart}
                     ${reasonPart}
                     ${signerPart}
@@ -74,20 +148,12 @@
                 </div>
               </div>
             </div>`;
-          // Trigger the flip after a short delay so the user sees the back
-          // briefly, simulating an “抽卡” effect.
-          setTimeout(() => {
-            const p = document.getElementById('draw-polaroid');
-            if (p) {
-              p.classList.add('flip');
-            }
-          }, 500);
-          // Scroll to the result
-          window.scrollTo({ top: result.offsetTop - 20, behavior: 'smooth' });
+          setTimeout(() => document.getElementById('draw-polaroid')?.classList.add('flip'), 300);
         } else {
-          result.style.display = 'block';
           result.textContent = 'No other songs yet—invite friends!';
         }
+
+        form.reset();
       });
     }
   </script>

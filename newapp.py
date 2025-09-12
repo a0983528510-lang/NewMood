@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, json, datetime, secrets
+import os, json, datetime, secrets, re
 from pathlib import Path
 
 from flask import Flask, render_template, request, redirect, url_for, session, abort, jsonify, flash
@@ -10,11 +10,29 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as grequests
 from dotenv import load_dotenv
 
+import requests as pyrequests  # for oEmbed / autofill
+
 APP_TITLE = "NewMood"
 BASE_DIR = Path(__file__).resolve().parent
 
 # Load .env if present (local dev)
 load_dotenv(BASE_DIR / ".env")
+
+YOUTUBE_OEMBED = "https://www.youtube.com/oembed?format=json&url="
+SPOTIFY_OEMBED = "https://open.spotify.com/oembed?url="
+
+def extract_yt_id(url: str) -> str | None:
+    """Extract YouTube video id from various URL formats."""
+    patterns = [
+        r"youtu\.be/([A-Za-z0-9_-]{11})",
+        r"v=([A-Za-z0-9_-]{11})",
+        r"shorts/([A-Za-z0-9_-]{11})",
+    ]
+    for p in patterns:
+        m = re.search(p, url)
+        if m:
+            return m.group(1)
+    return None
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
@@ -24,7 +42,7 @@ def create_app():
         GOOGLE_CLIENT_ID=(os.environ.get("GOOGLE_CLIENT_ID") or "").strip(),
         ADMIN_EMAILS=[e.strip().lower() for e in (os.environ.get("ADMIN_EMAILS") or "").split(",") if e.strip()],
         ADMIN_PASS=(os.environ.get("ADMIN_PASS") or "").strip(),
-        GA_MEASUREMENT_ID=(os.environ.get("GA_MEASUREMENT_ID") or "").strip(),
+        GA_MEASUREMENT_ID=(os.environ.get("GA_MEUREMENT_ID") or os.environ.get("GA_MEASUREMENT_ID") or "").strip(),
     )
 
     # Ensure instance folder exists
@@ -130,6 +148,49 @@ def create_app():
         flash("Profile updated", "success")
         return redirect(url_for("index"))
 
+    # ========== AutoFill: Server-side oEmbed ==========
+    @app.post("/autofill")
+    def autofill():
+        link = (request.json or {}).get("link", "").strip()
+        if not link:
+            return jsonify({"ok": False, "error": "missing_link"}), 400
+
+        meta = {"title": "", "artist": "", "thumbnail": ""}
+
+        try:
+            if "youtube.com" in link or "youtu.be" in link:
+                vid = extract_yt_id(link)
+                if vid:
+                    meta["thumbnail"] = f"https://img.youtube.com/vi/{vid}/hqdefault.jpg"
+                # oEmbed 抓標題與作者
+                r = pyrequests.get(YOUTUBE_OEMBED + pyrequests.utils.quote(link), timeout=6)
+                if r.ok:
+                    data = r.json()
+                    meta["title"] = data.get("title", "") or meta["title"]
+                    meta["artist"] = data.get("author_name", "") or meta["artist"]
+
+            elif "spotify." in link:
+                r = pyrequests.get(SPOTIFY_OEMBED + pyrequests.utils.quote(link), timeout=6)
+                if r.ok:
+                    data = r.json()
+                    # title 可能為 "Song · Artist"
+                    title = (data.get("title") or "").strip()
+                    if "·" in title:
+                        a, b = [x.strip() for x in title.split("·", 1)]
+                        meta["title"] = a
+                        meta["artist"] = data.get("author_name") or b
+                    else:
+                        meta["title"] = title
+                        meta["artist"] = data.get("author_name", "")
+                    if data.get("thumbnail_url"):
+                        meta["thumbnail"] = data["thumbnail_url"]
+            else:
+                return jsonify({"ok": False, "error": "unsupported_link"}), 400
+
+            return jsonify({"ok": True, "meta": meta})
+        except Exception as e:
+            return jsonify({"ok": False, "error": f"autofill_failed: {e}"}), 500
+
     @app.post("/submit")
     def submit():
         u = current_user()
@@ -149,15 +210,26 @@ def create_app():
                 VALUES (:aid, :t, :a, :r, :l, :now)
             """), {"aid": u["id"], "t": title, "a": artist, "r": reason, "l": link, "now": datetime.datetime.utcnow().isoformat()})
 
-            # Draw one random existing recommendation not from this user
-            # Draw one random existing recommendation not from this user.  Also
-            # fetch the posting user's nickname so the front end can display
-            # who submitted the recommendation.  Joining to the accounts
-            # table here avoids an extra query later.
+            # Draw one random existing recommendation not from this user, with nickname and thumbnail (YouTube).
             row = conn.execute(text("""
-                SELECT r.id, r.title, r.artist, r.reason, r.link, a.nickname
-                FROM recommendations AS r
-                JOIN accounts AS a ON a.id = r.account_id
+                SELECT r.id, r.title, r.artist, r.reason, r.link,
+                       a.nickname,
+                       CASE
+                         WHEN instr(lower(r.link), 'youtu') > 0 THEN
+                           'https://img.youtube.com/vi/' ||
+                           substr(
+                             replace(
+                               replace(
+                                 replace(lower(r.link),
+                                   'https://www.youtube.com/watch?v=', ''),
+                                 'https://youtu.be/', ''),
+                               'https://youtube.com/shorts/', ''),
+                             1, 11
+                           ) || '/hqdefault.jpg'
+                         ELSE NULL
+                       END AS thumbnail
+                FROM recommendations r
+                LEFT JOIN accounts a ON a.id = r.account_id
                 WHERE r.account_id != :aid
                 ORDER BY RANDOM()
                 LIMIT 1
@@ -169,9 +241,6 @@ def create_app():
                     VALUES (:aid, :rid, :now)
                 """), {"aid": u["id"], "rid": row["id"], "now": datetime.datetime.utcnow().isoformat()})
 
-        # For JSON serialisation we convert SQLAlchemy MappingResult to a
-        # regular dict.  If no row was found (i.e. the first user posting
-        # a song), drawn will be None.
         return jsonify({"ok": True, "drawn": dict(row) if row else None})
 
     @app.get("/history")
@@ -181,17 +250,26 @@ def create_app():
             return redirect(url_for("login"))
         with app.engine.begin() as conn:
             rows = conn.execute(text("""
-                SELECT
-                  d.id AS draw_id,
-                  d.created_at,
-                  r.title,
-                  r.artist,
-                  r.reason,
-                  r.link,
-                  a.nickname AS owner_nickname
-                FROM draws AS d
-                JOIN recommendations AS r ON r.id = d.recommendation_id
-                JOIN accounts AS a ON a.id = r.account_id
+                SELECT d.id as draw_id, d.created_at,
+                       r.title, r.artist, r.reason, r.link,
+                       a.nickname,
+                       CASE
+                         WHEN instr(lower(r.link), 'youtu') > 0 THEN
+                           'https://img.youtube.com/vi/' ||
+                           substr(
+                             replace(
+                               replace(
+                                 replace(lower(r.link),
+                                   'https://www.youtube.com/watch?v=', ''),
+                                 'https://youtu.be/', ''),
+                               'https://youtube.com/shorts/', ''),
+                             1, 11
+                           ) || '/hqdefault.jpg'
+                         ELSE NULL
+                       END AS thumbnail
+                FROM draws d
+                JOIN recommendations r ON r.id = d.recommendation_id
+                LEFT JOIN accounts a ON a.id = r.account_id
                 WHERE d.account_id = :aid
                 ORDER BY d.id DESC
                 LIMIT 100

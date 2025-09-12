@@ -19,6 +19,8 @@ label { display:block; margin-top:8px; }
 input[type=text], input[type=url], textarea { width:100%; padding:8px; border:2px solid #0a0a0a; border-radius:8px; background:#fff; }
 textarea { resize:vertical; }
 .footer { text-align:center; padding:20px; color:#333; }
+
+/* 便利貼容器（僅保留外框用於包表單等） */
 .sticky-wrap { display:flex; justify-content:center; }
 .sticky { width:100%; max-width:760px; padding:16px; border:3px solid #0a0a0a; border-radius:14px; background:var(--paper); box-shadow:6px 6px 0 #0a0a0a; }
 .sticky.yellow { background: var(--paper); }
@@ -26,119 +28,42 @@ textarea { resize:vertical; }
 .sticky.green { background: var(--green); }
 .sticky.orange { background: var(--orange); }
 .sticky.pink { background: var(--pink); }
-.draw-area {
-  display: flex;
-  justify-content: center;
-  margin-top: 12px;
-}
 
-/* Polaroid card styles */
-.polaroid-container {
-  width: 260px;
-  height: 320px;
-  perspective: 1000px;
-  margin: 0 auto;
-}
-
-.polaroid {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.8s;
-}
-
-.polaroid.flip {
-  transform: rotateY(180deg);
-}
-
-.polaroid-face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 3px solid #0a0a0a;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 6px 6px 0 #0a0a0a;
-  backface-visibility: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Back face shows the logo and a simple caption */
-.polaroid-face.back {
-  transform: rotateY(180deg);
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-  text-align: center;
-}
-
-.polaroid-face.back .back-logo {
-  width: 80px;
-  height: auto;
-  margin-bottom: 8px;
-}
-
-.polaroid-face.back .back-text {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-/* Front face contains a cover area and info area */
-.polaroid-face.front {
-  overflow: hidden;
-}
-
-.polaroid-face.front .cover {
-  flex: 1;
-  background: var(--paper);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 2px solid #0a0a0a;
-}
-
-.polaroid-face.front .cover .cover-icon {
-  font-size: 48px;
-  opacity: 0.6;
-}
-
-.polaroid-face.front .info {
-  padding: 8px;
-  font-size: 14px;
-}
-
-.polaroid-face.front .info .title-artist {
-  margin-bottom: 4px;
-}
-
-.polaroid-face.front .info .play-link a {
-  color: #0000ee;
-  text-decoration: underline;
-}
-
-.polaroid-face.front .info .reason {
-  margin-top: 6px;
-}
-
-.polaroid-face.front .info .signer {
-  margin-top: 6px;
-  font-style: italic;
-  font-size: 12px;
-}
-
-/* Grid for displaying multiple polaroids in the history page */
-.polaroid-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-  justify-items: center;
-}
-.note-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px; margin-top:12px; }
+.note-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; margin-top:12px; }
 .note { border:2px solid #0a0a0a; border-radius:10px; background:#fff; padding:10px; }
 .note.full { grid-column:1 / -1; }
 .dim { opacity:0.6; font-size:12px; margin-top:6px; }
 .metrics { display:flex; gap:12px; }
 .metric { border:2px solid #0a0a0a; border-radius:12px; background:#fff; padding:10px 12px; min-width:120px; text-align:center; }
+
+/* ===== Polaroid Styles ===== */
+.polaroid-stage { display:flex; justify-content:center; margin:24px 0; }
+.draw-area { display:flex; justify-content:center; margin-top:12px; }
+
+.polaroid-container { width:260px; height:320px; perspective:1000px; margin:0 auto; }
+.polaroid { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .6s ease; }
+.polaroid.flip { transform: rotateY(180deg); }
+.polaroid-face { position:absolute; inset:0; backface-visibility:hidden; border:3px solid #0a0a0a; border-radius:12px; background:#fff; box-shadow:6px 6px 0 #0a0a0a; }
+.polaroid-face.front { transform: rotateY(180deg); }
+
+/* Front */
+.polaroid-face.front .cover {
+  height:65%;
+  background-size:cover;
+  background-position:center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-bottom:2px solid #0a0a0a;
+}
+.cover-icon { font-size:48px; opacity:.6; }
+.info { padding:8px 10px; }
+.title-artist { font-weight:600; margin-bottom:4px; }
+.play-link a { border-bottom:2px solid #0a0a0a; }
+.reason { margin-top:6px; }
+.signer { margin-top:6px; text-align:right; }
+
+/* Back */
+.back-content { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+.back-logo { width:48px; height:48px; }
+.back-text { font-size:18px; font-weight:700; letter-spacing:.5px; }
