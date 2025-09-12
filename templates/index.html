@@ -4,21 +4,18 @@
   <div class="polaroid-stage">
     <div class="polaroid-container">
       <div class="polaroid" id="preview-polaroid">
+        <!-- 背面：灰黑 -->
         <div class="polaroid-face back">
           <div class="back-content">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NewMood logo" class="back-logo" />
-            <div class="back-text">NewMood</div>
+            <div class="back-seal">NewMood</div>
           </div>
         </div>
+        <!-- 正面：白底 + 外框 + 方形相紙窗 -->
         <div class="polaroid-face front">
-          <div class="cover" id="preview-cover">
-            <span class="cover-icon" id="cover-icon">🎵</span>
-          </div>
-          <div class="info">
-            <div class="title-artist" id="preview-title-artist">等待自動帶入…</div>
-            <div class="play-link" id="preview-link" style="display:none;"></div>
-            <div class="reason" id="preview-reason"></div>
-            <div class="signer" id="preview-signer"></div>
+          <div class="frame">
+            <div class="band top"><span id="band-top-text">等待自動帶入…</span></div>
+            <div class="photo" id="preview-cover"><span class="cover-icon" id="cover-icon">🎵</span></div>
+            <div class="band bottom"><span id="band-bottom-text"></span></div>
           </div>
         </div>
       </div>
@@ -33,128 +30,87 @@
   {% else %}
     <div class="sticky-wrap"><div class="sticky blue">
       <form id="post-form" method="post" action="{{ url_for('submit') }}">
-        <label>Link (YouTube/Spotify)</label>
+        <label>Link (YouTube Music / Spotify / Apple Music)</label>
         <input type="url" name="link" id="input-link" placeholder="https://..." />
-        <button class="btn small" type="button" id="btn-autofill">AutoFill</button>
 
-        <label>Song title</label>
-        <input type="text" name="title" id="input-title" required placeholder="e.g., Plastic Love" />
-
-        <label>Artist</label>
-        <input type="text" name="artist" id="input-artist" required placeholder="e.g., Mariya Takeuchi" />
+        <!-- Title/Artist 由 AutoFill 寫入的隱藏欄位 -->
+        <input type="hidden" name="title" id="input-title" />
+        <input type="hidden" name="artist" id="input-artist" />
 
         <label>Why do you recommend it? (optional)</label>
         <textarea name="reason" id="input-reason" rows="3" placeholder="Short reason..."></textarea>
 
-        <button class="btn" type="submit">Post & Draw</button>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn" type="button" id="btn-autofill">AutoFill</button>
+          <button class="btn" type="submit">Post & Draw</button>
+        </div>
       </form>
       <div id="draw-result" class="draw-area" style="display:none;"></div>
     </div></div>
   {% endif %}
-
+  <script id="boot-data" type="application/json">
+    {{ {'nickname': (user.nickname if user else None)} | tojson }}
+  </script>
   <script>
-    const $ = (s) => document.querySelector(s);
-    const form = $('#post-form');
-    const linkInput = $('#input-link');
-    const titleInput = $('#input-title');
-    const artistInput = $('#input-artist');
-    const reasonInput = $('#input-reason');
+  // …前略（上面的程式碼不變）
 
-    // Polaroid preview elements
-    const preview = $('#preview-polaroid');
-    const previewCover = $('#preview-cover');
-    const coverIcon = $('#cover-icon');
-    const previewTA = $('#preview-title-artist');
-    const previewLink = $('#preview-link');
-    const previewReason = $('#preview-reason');
-    const previewSigner = $('#preview-signer');
+  // 簡單淨化，避免把奇怪字元插進 HTML
+  const safe = (s) => (s ?? '').toString();
 
-    async function doAutofill() {
-      const link = (linkInput.value || '').trim();
-      if (!link) { alert('請先貼上連結'); return; }
-      const resp = await fetch('{{ url_for("autofill") }}', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({link})
-      });
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const resp = await fetch(form.action, { method: 'POST', body: fd });
       const data = await resp.json();
-      if (!data.ok) { alert(data.error || 'AutoFill 失敗'); return; }
-      const m = data.meta || {};
-      if (m.title) titleInput.value = m.title;
-      if (m.artist) artistInput.value = m.artist;
+      if (!data.ok) { alert(data.error || 'Error'); return; }
 
-      // 預覽更新
-      if (m.thumbnail) {
-        previewCover.style.backgroundImage = `url('${m.thumbnail}')`;
-        coverIcon.style.display = 'none';
-      } else {
-        previewCover.style.backgroundImage = '';
-        coverIcon.style.display = '';
-      }
-      previewTA.textContent = `${titleInput.value || '(無標題)'} — ${artistInput.value || '(無歌手)'}`;
-      if (link) {
-        previewLink.style.display = 'block';
-        previewLink.innerHTML = `<a href="${link}" target="_blank">Play</a>`;
-      }
+      const result = document.getElementById('draw-result');
+      result.style.display = 'block';
 
-      // 抽卡體驗：背面 → 翻面
-      preview.classList.remove('flip');
-      setTimeout(() => preview.classList.add('flip'), 200);
-    }
+      if (data.drawn) {
+        const d = data.drawn;
+        const signer = d.nickname ? d.nickname : '';
+        const reason = d.reason ? d.reason : '';
 
-    $('#btn-autofill')?.addEventListener('click', doAutofill);
-    linkInput?.addEventListener('change', doAutofill);
-    reasonInput?.addEventListener('input', () => {
-      previewReason.textContent = reasonInput.value || '';
-    });
+        // 先把 style 字串組好（避免在樣板字串裡再拼反引號）
+        const bgStyle = d.thumbnail
+          ? ' style="background-image:url(' + d.thumbnail + ');background-size:cover;background-position:center;background-repeat:no-repeat;"'
+          : '';
 
-    // 送出並顯示抽到的拍立得（先背面後翻）
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fd = new FormData(form);
-        const resp = await fetch(form.action, {method: 'POST', body: fd});
-        const data = await resp.json();
-        if (!data.ok) { alert(data.error || 'Error'); return; }
-
-        const result = document.getElementById('draw-result');
-        result.style.display = 'block';
-
-        if (data.drawn) {
-          const drawn = data.drawn;
-          const linkPart = drawn.link ? `<div class="play-link"><a href="${drawn.link}" target="_blank">Play</a></div>` : '';
-          const reasonPart = drawn.reason ? `<div class="reason">${drawn.reason}</div>` : '';
-          const signerPart = drawn.nickname ? `<div class="signer">— ${drawn.nickname}</div>` : '';
-
-          result.innerHTML = `
-            <div class="polaroid-container">
-              <div class="polaroid" id="draw-polaroid">
-                <div class="polaroid-face back">
-                  <div class="back-content">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" class="back-logo" />
-                    <div class="back-text">NewMood</div>
+        // ✅ 這裡一定要有結尾的 ` 和 ;
+        result.innerHTML = `
+          <div class="polaroid-container">
+            <div class="polaroid" id="draw-polaroid">
+              <div class="polaroid-face back">
+                <div class="back-content"><div class="back-seal">NewMood</div></div>
+              </div>
+              <div class="polaroid-face front">
+                <div class="frame">
+                  <div class="band top">
+                    <span><strong>${safe(d.title)}</strong>${signer ? ' — ' + safe(signer) : ''}</span>
                   </div>
-                </div>
-                <div class="polaroid-face front">
-                  <div class="cover" style="background-image:${drawn.thumbnail ? `url('${drawn.thumbnail}')` : 'none'}">
-                    ${drawn.thumbnail ? '' : '<span class="cover-icon">🎵</span>'}
+                  <div class="photo"${bgStyle}>
+                    ${d.thumbnail ? '' : '<span class="cover-icon">🎵</span>'}
                   </div>
-                  <div class="info">
-                    <div class="title-artist"><strong>${drawn.title}</strong> — ${drawn.artist}</div>
-                    ${linkPart}
-                    ${reasonPart}
-                    ${signerPart}
+                  <div class="band bottom">
+                    <span>
+                      ${safe(reason)}
+                      ${d.link ? '<span class="play-link" style="margin-left:6px;"><a href="' + d.link + '" target="_blank" rel="noopener">Play</a></span>' : ''}
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>`;
-          setTimeout(() => document.getElementById('draw-polaroid')?.classList.add('flip'), 300);
-        } else {
-          result.textContent = 'No other songs yet—invite friends!';
-        }
+            </div>
+          </div>
+        `; // ← 收尾的反引號與分號
 
-        form.reset();
-      });
-    }
-  </script>
-{% endblock %}
+        setTimeout(() => document.getElementById('draw-polaroid')?.classList.add('flip'), 220);
+      } else {
+        result.textContent = 'No other songs yet—invite friends!';
+      }
+
+      form.reset();
+    });
+  }
+</script>

@@ -10,42 +10,26 @@
           {% for it in items %}
           <div class="polaroid-container" onclick="this.querySelector('.polaroid').classList.toggle('flip')">
             <div class="polaroid">
-              <!-- 背面 -->
+              <!-- 背面：灰黑 -->
               <div class="polaroid-face back">
-                <div class="back-content">
-                  <img src="{{ url_for('static', filename='images/logo.png') }}" class="back-logo" alt="NewMood" />
-                  <div class="back-text">NewMood</div>
-                </div>
+                <div class="back-content"><div class="back-seal">NewMood</div></div>
               </div>
-
-              <!-- 正面 -->
+              <!-- 正面：白底外框 -->
               <div class="polaroid-face front">
-                <div class="cover"
-                     {% if it.thumbnail %}
-                       style="background-image: url('{{ it.thumbnail }}')"
-                     {% endif %}>
-                  {% if not it.thumbnail %}
-                    <span class="cover-icon">🎵</span>
-                  {% endif %}
-                </div>
-                <div class="info">
-                  <div class="title-artist"><b>{{ it.title }}</b> — {{ it.artist }}</div>
-
-                  {% if it.link %}
-                  <div class="play-link">
-                    <a href="{{ it.link }}" target="_blank" rel="noopener">Play</a>
+                <div class="frame">
+                  <div class="band top">
+                    <span><b>{{ it.title }}</b>{% if it.nickname %} — {{ it.nickname }}{% endif %}</span>
                   </div>
-                  {% endif %}
-
-                  {% if it.reason %}
-                  <div class="reason">{{ it.reason }}</div>
-                  {% endif %}
-
-                  {% if it.nickname %}
-                  <div class="signer">— {{ it.nickname }}</div>
-                  {% endif %}
-
-                  <div class="dim">{{ it.created_at }}</div>
+                  <div class="photo"
+                       {% if it.thumbnail %}style="background-image:url('{{ it.thumbnail }}')" {% endif %}>
+                    {% if not it.thumbnail %}<span class="cover-icon">🎵</span>{% endif %}
+                  </div>
+                  <div class="band bottom">
+                    <span>
+                      {% if it.reason %}{{ it.reason }}{% endif %}
+                      {% if it.link %}<span class="play-link" style="margin-left:6px;"><a href="{{ it.link }}" target="_blank" rel="noopener">Play</a></span>{% endif %}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
