@@ -215,3 +215,30 @@ textarea { resize:vertical; }
 .polaroid-stage{
   margin: 48px 0 24px;
 }
+/* 讓 .photo 的 top/bottom/left/right 一定相對於 .frame 定位 */
+.polaroid-face.front .frame{
+  position: relative;      /* 關鍵：建立定位參考 */
+  width: 100%;
+  height: 100%;
+}
+
+/* 確保這一版覆蓋任何舊值（包含你之前的 21% 等） */
+.polaroid.instax-mini .frame > .photo{
+  position: absolute;
+  /* 這四個就是縮圖的「邊界」——改這四個即可控制大小與位置 */
+  top: 10%;     
+  bottom: 25%;  /* ↑ 下方白邊厚度（變大＝相片縮小，留白變多） */
+  left: 7.4%;
+  right: 7.4%;
+  /* 若曾被別的規則覆蓋，可先測試加上 !important，確認有吃到 */
+  /* bottom: 25% !important; */
+}
+
+/* 讓上下兩條文字帶浮在相片之上（避免覆蓋或被擠壓） */
+.polaroid-face.front .band{ 
+  position: absolute;
+  z-index: 2;
+}
+.polaroid-face.front .photo{
+  z-index: 1;
+}
