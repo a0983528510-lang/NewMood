@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="sticky-wrap">
+    <div class="sticky pink">
+      <h3>Admin Dashboard</h3>
+      <div class="metrics">
+        <div class="metric">Users<br><b>{{ metrics.users }}</b></div>
+        <div class="metric">Recommendations<br><b>{{ metrics.recos }}</b></div>
+        <div class="metric">Draws<br><b>{{ metrics.draws }}</b></div>
+      </div>
+      <h4 style="margin-top:16px;">Latest 50 recommendations</h4>
+      <div class="note-grid">
+        {% for r in rows %}
+        <div class="note full">
+          <div><b>#{{ r.id }}</b> · {{ r.created_at }}</div>
+          <div><b>{{ r.title }}</b> — {{ r.artist }}</div>
+          <div>by {{ r.nickname or '—' }} · {{ r.email or '—' }}</div>
+          {% if r.link %}<div><a href="{{ r.link }}" target="_blank">Play link</a></div>{% endif %}
+          {% if r.reason %}<div style="margin-top:6px;">{{ r.reason }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

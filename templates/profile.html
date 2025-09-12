@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="sticky-wrap">
+    <div class="sticky green">
+      <h3>Profile</h3>
+      <form method="post" action="{{ url_for('profile_post') }}">
+        <label>Nickname</label>
+        <input type="text" name="nickname" value="{{ user.nickname }}" required />
+        <button class="btn" type="submit">Save</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

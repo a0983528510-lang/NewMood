@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="sticky-wrap">
+    <div class="sticky blue">
+      <h3>Login</h3>
+      <p>Sign in with Google to continue.</p>
+      <div id="g_id_onload"
+           data-client_id="{{ google_client_id }}"
+           data-context="signin"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin" data-type="standard" data-theme="outline" data-size="large" data-text="signin_with" data-shape="rectangular" data-logo_alignment="left"></div>
+      <p><small>If the button doesn’t appear, check your GOOGLE_CLIENT_ID in <code>.env</code>.</small></p>
+    </div>
+  </div>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    async function handleCredentialResponse(resp) {
+      try {
+        const r = await fetch("{{ url_for('auth_google') }}", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({credential: resp.credential})
+        });
+        const data = await r.json();
+        if (data.ok) {
+          window.location.href = "{{ url_for('index') }}";
+        } else {
+          alert("Login failed: " + (data.error || ""));
+        }
+      } catch (e) { alert("Login error"); }
+    }
+  </script>
+{% endblock %}

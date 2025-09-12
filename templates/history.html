@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="sticky-wrap">
+    <div class="sticky orange">
+      <h3>Your draw history</h3>
+      {% if not items %}
+        <p>No draws yet.</p>
+      {% else %}
+        <div class="polaroid-grid">
+          {% for it in items %}
+          <div class="polaroid-container">
+            <div class="polaroid">
+              <div class="polaroid-face back">
+                <img src="/static/images/logo.png" alt="NewMood logo" class="back-logo" />
+                <div class="back-text">NewMood</div>
+              </div>
+              <div class="polaroid-face front">
+                <div class="cover"><span class="cover-icon">🎵</span></div>
+                <div class="info">
+                  <div class="title-artist"><strong>{{ it.title }}</strong> — {{ it.artist }}</div>
+                  {% if it.link %}<div class="play-link"><a href="{{ it.link }}" target="_blank">Play</a></div>{% endif %}
+                  {% if it.reason %}<div class="reason">{{ it.reason }}</div>{% endif %}
+                  {% if it.owner_nickname %}<div class="signer">— {{ it.owner_nickname }}</div>{% endif %}
+                  <div class="dim">{{ it.created_at }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <script>
+    // Allow users to flip their historical Polaroids by clicking on them.
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.polaroid-grid .polaroid').forEach(el => {
+        el.addEventListener('click', () => {
+          el.classList.toggle('flip');
+        });
+      });
+    });
+  </script>
+{% endblock %}
