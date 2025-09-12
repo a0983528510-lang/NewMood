@@ -1,3 +1,101 @@
+/* ====== Polaroid (clean, single source of truth) ====== */
+
+/* 舞台與容器 */
+.polaroid-stage { display:flex; justify-content:center; margin:24px 0; }
+.polaroid-container { width: 320px; margin: 0 auto; perspective: 1000px; }
+
+/* 卡片本體：在這裡決定寬高比例（Instax Mini 54×86mm） */
+.polaroid {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform .6s ease;
+}
+.polaroid.flip { transform: rotateY(180deg); }
+
+/* 指定 Instax Mini 比例與尺寸（可自行調整 width 由容器控制） */
+.polaroid.instax-mini {
+  aspect-ratio: 54 / 86; /* 寬 / 高（直式） */
+  height: auto;          /* 交給 aspect-ratio 自算 */
+}
+
+/* 正反兩面 */
+.polaroid-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  box-shadow: 6px 6px 0 #0a0a0a;
+}
+
+/* 背面 */
+.polaroid-face.back {
+  background: #1e1e1e;
+  color: #fff;
+  border: 3px solid #0a0a0a;
+}
+.back-content { height:100%; display:flex; align-items:center; justify-content:center; }
+.back-seal {
+  color:#e8e8e8; font-weight:700; letter-spacing:.6px;
+  border:2px dashed #9a9a9a; padding:8px 12px; border-radius:8px;
+}
+
+/* 正面（只有外框；內部靠絕對定位佈局） */
+.polaroid-face.front {
+  background:#fff;
+  border:3px solid #0a0a0a;
+  transform: rotateY(180deg);
+  position: relative;
+  overflow: hidden; /* 保險：任何溢出都不要跑出去 */
+}
+
+/* 文字帶（上/下），用絕對定位壓在卡片上 */
+.band {
+  position: absolute; left: 0; right: 0;
+  padding: 0 10px;
+  display:flex; align-items:center; justify-content:center;
+  z-index: 2; /* 確保蓋在照片上 */
+}
+.band span {
+  width:100%; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.band.top  { top: 2%;  height: 8%;  font-weight:700; }
+.band.bottom { bottom: 6%; height: 12%; }
+
+/* ===== 中間「相片窗」：真正裁切 YouTube 縮圖的位置 ===== */
+.photo {
+  position: absolute;
+  /* Instax Mini 的白邊比例（左右約 7.4%，上約 7%，下厚一點） */
+  left: 7.4%; right: 7.4%;
+  top: 7%; bottom: 40%;
+  background: #f3f3f3 center / cover no-repeat; /* 若用 background-image 也能正常鋪滿 */
+  border-radius: 4px;
+  overflow: hidden;     /* 關鍵：把內容裁在窗內 */
+  z-index: 1;
+}
+
+/* 如果你用 <img id="preview-cover"> 放縮圖，確保不溢出也不變形 */
+.photo img,
+#preview-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* 等同 background-size: cover */
+  display: block;
+}
+
+/* 若你直接把縮圖設成 #preview-cover 的背景圖，也會按 cover 處理 */
+#preview-cover {
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* 預設圖示（沒有縮圖時） */
+.cover-icon { font-size: 48px; opacity: .6; }
+
+/* ===== 你原本站內的樣式（節錄；未動） ===== */
 :root { --paper:#fff9b1; --blue:#cfe8ff; --green:#d7ffd9; --orange:#ffe3c2; --pink:#ffd3e2; }
 * { box-sizing: border-box; }
 body { margin:0; font-family: 'Patrick Hand', cursive; background-size: 300px; }
@@ -20,7 +118,7 @@ input[type=text], input[type=url], textarea { width:100%; padding:8px; border:2p
 textarea { resize:vertical; }
 .footer { text-align:center; padding:20px; color:#333; }
 
-/* 便利貼容器（保留外框用於包表單等） */
+/* 便利貼 */
 .sticky-wrap { display:flex; justify-content:center; }
 .sticky { width:100%; max-width:760px; padding:16px; border:3px solid #0a0a0a; border-radius:14px; background:var(--paper); box-shadow:6px 6px 0 #0a0a0a; }
 .sticky.yellow { background: var(--paper); }
@@ -31,112 +129,4 @@ textarea { resize:vertical; }
 
 .note-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; margin-top:12px; }
 .dim { opacity:0.6; font-size:12px; margin-top:6px; }
-
-/* ===== Polaroid Styles ===== */
-.polaroid-stage { display:flex; justify-content:center; margin:24px 0; }
-.draw-area { display:flex; justify-content:center; margin-top:12px; }
-
-.polaroid-container { width:260px; height:320px; perspective:1000px; margin:0 auto; }
-.polaroid { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .6s ease; }
-.polaroid.flip { transform: rotateY(180deg); }
-.polaroid-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:12px; box-shadow:6px 6px 0 #0a0a0a; }
-
-/* 背面：灰黑底 */
-.polaroid-face.back { background:#1e1e1e; color:#fff; border:3px solid #0a0a0a; }
-.back-content { height:100%; display:flex; align-items:center; justify-content:center; }
-.back-seal { color:#e8e8e8; font-weight:700; letter-spacing:.6px; border:2px dashed #9a9a9a; padding:8px 12px; border-radius:8px; }
-
-/* 正面：白底 + 外框 + 相紙窗 */
-.polaroid-face.front { background:#fff; border:3px solid #0a0a0a; transform: rotateY(180deg); display:flex; align-items:center; justify-content:center; }
-.frame {
-  width:86%;
-  height:86%;
-  background:#fff;
-  border:2px solid #0a0a0a;
-  border-radius:10px;
-  display:grid;
-  grid-template-rows: 22% 56% 22%; /* 上緣／照片窗(正方)／下緣 */
-}
-
-/* 上下緣文字帶 */
-.band { display:flex; align-items:center; justify-content:center; padding:0 8px; }
-.band.top { border-bottom:2px solid #0a0a0a; font-weight:700; }
-.band.bottom { border-top:2px solid #0a0a0a; }
-.band span { width:100%; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-/* 中間方形相紙窗：確保是正方、封面鋪滿 */
-.photo {
-  width:100%;
-  height:100%;
-  background:#f3f3f3 center/cover no-repeat;
-  display:flex; align-items:center; justify-content:center;
-}
-.cover-icon { font-size:48px; opacity:.6; }
-.play-link a { border-bottom:2px solid #0a0a0a; }
-
-/* ===== Polaroid Styles (rework) ===== */
-
-/* 調整舞台與容器尺寸：更接近真實比例、整體再大一些 */
-.polaroid-stage { display:flex; justify-content:center; margin:24px 0; }
-.polaroid-container { width:320px; /* 原260→320，視需要再調 */
-  /* 預設先給個中性比例；真正比例由下面樣式決定 */
-  height:auto; margin:0 auto; perspective:1000px;
-}
-.polaroid { position:relative; width:100%; transform-style:preserve-3d; transition:transform .6s ease; }
-.polaroid.flip { transform: rotateY(180deg); }
-.polaroid-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:12px; box-shadow:6px 6px 0 #0a0a0a; }
-
-/* 背面維持不變 */
-.polaroid-face.back { background:#1e1e1e; color:#fff; border:3px solid #0a0a0a; }
-.back-content { height:100%; display:flex; align-items:center; justify-content:center; }
-.back-seal { color:#e8e8e8; font-weight:700; letter-spacing:.6px; border:2px dashed #9a9a9a; padding:8px 12px; border-radius:8px; }
-
-/* 正面：拿掉內部分隔線，只保留外框；由不同格式控制比例與邊距 */
-.polaroid-face.front {
-  background:#fff; border:3px solid #0a0a0a; transform: rotateY(180deg);
-  display:flex; align-items:center; justify-content:center; position:relative;
-}
-
-/* 共同：影像窗 */
-.photo {
-  background:#f3f3f3 center/cover no-repeat;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:4px;
-}
-.cover-icon { font-size:48px; opacity:.6; }
-
-/* === 文字帶（保留文字、移除分隔線）=== */
-.band { position:absolute; left:0; right:0; padding:0 10px; display:flex; align-items:center; justify-content:center; }
-.band span { width:100%; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-/* 去掉上/下分隔線 */
-.band.top, .band.bottom { border:none; }
-.band.top { font-weight:700; }
-.band.bottom {}
-
-/* =========================
-   A) instax-mini 造型（86×54mm；影像 62×46mm；底邊最厚）
-   在 .polaroid 元素上加 class="instax-mini"
-   ========================= */
-.polaroid.instax-mini .polaroid-face.front {
-  /* 高:寬 = 86:54 ≈ 1.593；用 aspect-ratio 逼近真實比例 */
-  aspect-ratio: 54 / 86; /* 寬 / 高（直式卡片）*/
-  width: 280px; /* 你可再放大縮小 */
-  height: auto;
-}
-.polaroid.instax-mini .photo {
-  /* 影像 62×46mm；用內邊距製作白邊：左右 ≈ (54-46)/2=4mm；上+下 ≈ (86-62)=24mm（下邊比上邊厚很多） */
-  position:absolute;
-  /* 以整張為 54×86 的比例，轉成百分比邏輯：
-     左右白邊約 4/54 ≈ 7.4%；上白邊約 6/86 ≈ 7%（略薄）；下白邊約 18/86 ≈ 21%（明顯厚） */
-  left:7.4%; right:7.4%;
-  top:7%; bottom:40%;
-}
-.polaroid.instax-mini .band.top {
-  /* instax 上緣窄；讓文字帶占薄薄一條（若不需要可 display:none） */
-  top:2%; height:8%;
-}
-.polaroid.instax-mini .band.bottom {
-  /* 下緣常用來寫字；留在厚底邊中間 */
-  bottom:6%; height:12%;
-}
 
