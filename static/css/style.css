@@ -1,124 +1,122 @@
-:root { --paper:#fff9b1; --blue:#cfe8ff; --green:#d7ffd9; --orange:#ffe3c2; --pink:#ffd3e2; }
-* { box-sizing: border-box; }
-body { margin:0; font-family: 'Patrick Hand', cursive; background-size: 300px; }
-.topbar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:#fff; border-bottom:3px solid #0a0a0a; }
-.brand { display:flex; align-items:center; gap:8px; }
-.logo { width:28px; height:28px; }
-.brand-text { font-size:20px; font-weight:bold; }
-.nav a, .nav form { margin-left:12px; }
-a { color:#0a0a0a; text-decoration:none; border-bottom:2px solid transparent; }
-a:hover { border-bottom:2px solid #0a0a0a; }
-.container { max-width:900px; margin:24px auto; padding:0 12px; }
-.flash { margin-bottom:12px; }
-.flash-item { padding:8px 10px; border:2px solid #0a0a0a; border-radius:8px; background:#fff; margin-bottom:6px; }
-.flash-item.success { background:#ddffdd; }
-.flash-item.error { background:#ffdede; }
-.btn { display:inline-block; padding:8px 12px; border:2px solid #0a0a0a; border-radius:10px; background:#fff; cursor:pointer; }
-.btn.small { padding:4px 8px; font-size:12px; }
-label { display:block; margin-top:8px; }
-input[type=text], input[type=url], textarea { width:100%; padding:8px; border:2px solid #0a0a0a; border-radius:8px; background:#fff; }
-textarea { resize:vertical; }
-.footer { text-align:center; padding:20px; color:#333; }
-
-/* 便利貼容器（保留外框用於包表單等） */
-.sticky-wrap { display:flex; justify-content:center; }
-.sticky { width:100%; max-width:760px; padding:16px; border:3px solid #0a0a0a; border-radius:14px; background:var(--paper); box-shadow:6px 6px 0 #0a0a0a; }
-.sticky.yellow { background: var(--paper); }
-.sticky.blue { background: var(--blue); }
-.sticky.green { background: var(--green); }
-.sticky.orange { background: var(--orange); }
-.sticky.pink { background: var(--pink); }
-
-.note-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; margin-top:12px; }
-.dim { opacity:0.6; font-size:12px; margin-top:6px; }
-
-/* ======== Polaroid + Form layout to match Figma ======== */
-
-/* 背景（若你已在別處設定可忽略這段） */
+/* ===== 背景（你已有 brick 圖可沿用；此段僅保留） ===== */
 /* body { background: url(/static/img/brick.jpg) center/cover fixed; } */
 
-.polaroid-stage{
-  display:flex; justify-content:center; align-items:center;
-  margin: 40px 0 24px;
-}
-.polaroid-container{ width: clamp(280px, 32vw, 360px); perspective:1000px; }
+/* ===== 預覽舞台 ===== */
+.polaroid-stage{ display:flex; justify-content:center; align-items:center; margin:36px 0 20px; }
+.polaroid-container{ width: clamp(300px, 32vw, 380px); perspective:1000px; }
 
+/* 卡片本體（Instax Mini 比例） */
 .polaroid{
-  position:relative; width:100%;
-  aspect-ratio:54/86; /* Instax Mini 比例（直式） */
+  position:relative; width:100%; aspect-ratio:54 / 86;
   transform-style:preserve-3d; transition:transform .6s ease;
 }
 .polaroid.flip{ transform: rotateY(180deg); }
+/* 旋轉一圈動畫（AutoFill 時一起套用） */
+.polaroid.spin { animation: spinOnce .9s ease both; }
+@keyframes spinOnce { from{ transform: rotateY(0) rotate(0deg); } to{ transform: rotateY(180deg) rotate(360deg); } }
 
 .polaroid-face{
   position:absolute; inset:0; backface-visibility:hidden;
   border-radius:10px; box-shadow:6px 6px 0 #0a0a0a;
 }
 
-/* 背面 */
-.polaroid-face.back{
-  background:#1e1e1e; color:#fff; border:3px solid #0a0a0a;
-  display:flex; align-items:center; justify-content:center;
+/* ===== 背面：用幾何塊組成黑色卡 ===== */
+.polaroid-face.back{ background:#1e1e1e; border:3px solid #0a0a0a; display:flex; }
+.back-card{
+  position:relative; width:88%; height:92%; margin:auto; background:#2a2a2a; border-radius:8px;
+  box-shadow: inset 0 0 0 2px #0a0a0a;
 }
-.back-seal{
-  color:#e8e8e8; font-weight:700; letter-spacing:.4px;
-  border:2px dashed #9a9a9a; padding:8px 12px; border-radius:8px;
+.back-strip{ position:absolute; left:0; right:0; height:12%; background:#6f6f6f; }
+.back-strip.top{ top:0; border-radius:8px 8px 0 0; }
+.back-strip.bottom{ bottom:0; border-radius:0 0 8px 8px; }
+.back-dash{
+  position:absolute; left:50%; top:45%; transform:translate(-50%,-50%);
+  color:#ddd; padding:10px 16px; border:2px dashed #cfcfcf; border-radius:12px; font-weight:700; opacity:.8;
+}
+.back-brand{
+  position:absolute; bottom:4%; left:0; right:0; display:flex; gap:28px; justify-content:center; color:#eaeaea; opacity:.9; font-weight:800;
 }
 
-/* 正面 */
-.polaroid-face.front{
-  background:#fff; border:3px solid #0a0a0a;
-  transform: rotateY(180deg);
-  display:flex; align-items:center; justify-content:center;
+/* ===== 正面（白色拍立得外框） ===== */
+.polaroid-face.front{ background:#fff; border:3px solid #0a0a0a; transform: rotateY(180deg); display:flex; }
+.frame{
+  position:relative; width:86%; height:86%; margin:auto; background:#fff; border:2px solid #0a0a0a; border-radius:8px;
+  display:grid; grid-template-rows: auto 1fr;
 }
 
-
-
-/* 文字帶：依 Figma 位置用絕對定位 */
-.band{ position:absolute; left:6%; right:6%;
-  display:flex; align-items:center; justify-content:center; padding:2px 6px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2;
-}
-.band.top{ top:5%; height:10%; font-weight:700; }
-.band.bottom{ bottom:6%; height:14%; }
-
-/* 相片窗（灰色正方形） */
+/* 相片窗：置中、略靠上；右側可留出美術空間 */
 .photo{
-  position:absolute; left:50%; transform:translateX(-50%);
-  top:10%; width:72%; aspect-ratio:1.5/1;                 /* 正方形 */
-  background:#9a9a9a center/cover no-repeat; border:3px solid #0a0a0a;            /* AutoFill 用背景圖 */
-  border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  position:relative; margin:6% 7.4% 6% 7.4%;
+  background:transparent;
+  display:grid; grid-template-rows: 1fr; grid-template-columns: 1fr;
 }
-.cover-icon{ font-size:48px; opacity:.6; }
 
-/* 也支援 <img> 放縮圖的情境 */
-.photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* 實際封面（遮罩框） */
+.cover{
+  width:100%; aspect-ratio:1/1; border-radius:4px;
+  background:#9a9a9a center/cover no-repeat; overflow:hidden;
+  box-shadow:0 0 0 2px #0a0a0a inset;
+}
+.cover-icon{ font-size:48px; opacity:.6; display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
 
-/* ===== Form to match Figma bar ===== */
+/* 黃色斜體標題（覆蓋在相片上角，與 Figma 相似） */
+.overlay-title{
+  position:absolute; right:-2%; top:4%;
+  transform: rotate(-12deg);
+  font-weight:900; font-size: clamp(18px, 2.1vw, 28px);
+  color:#ffd21c; text-shadow: -2px 2px 0 #0a0a0a, 2px 2px 0 #0a0a0a;
+  pointer-events:none; user-select:none; white-space:nowrap; max-width:120%; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* 文字區：推薦人、理由、右下 LOGO */
+.info{
+  position:relative; margin: 0 7.4% 6% 7.4%;
+  display:grid; grid-template-rows: auto 1fr; gap:8px;
+}
+.signer{ font-weight:900; letter-spacing:.4px; font-size: clamp(18px, 2vw, 24px); }
+.reason{ color:#222; font-weight:700; opacity:.9; line-height:1.35; }
+.brand-mark{ position:absolute; right:0; bottom:-2px; font-weight:900; }
+
+/* ===== 表單區（Figma 樣式） ===== */
 .form-row{
-  max-width: 760px; margin: 12px auto 6px;
-  display:flex; align-items:center; gap:10px;
+  max-width: 900px; margin: 8px auto 6px;
+  display:flex; align-items:center; gap:10px; justify-content:center;
 }
 .input-url{
   flex:1; height:46px; padding:10px 12px;
   background:#fff; border:3px solid #0a0a0a; border-radius:10px;
   box-shadow:6px 6px 0 #0a0a0a;
+  font-weight:800; letter-spacing:.3px;
 }
-
 .btn-yellow{
-  height:46px; min-width:64px; padding:0 12px; cursor:pointer;
-  background:#ffd21c; border:3px solid #0a0a0a; border-radius:10px;
-  box-shadow:6px 6px 0 #0a0a0a; font-weight:700;
+  height:46px; min-width:72px; padding:0 16px; cursor:pointer;
+  background:#ffd21c; border:3px solid #0a0a0a; border-radius:10px; font-weight:900;
+  box-shadow:6px 6px 0 #0a0a0a;
 }
-.btn-yellow:hover{ filter:brightness(0.95); }
+.btn-yellow:hover{ filter:brightness(.96); }
 
-/* 下方大白框的樣式（輸入理由） */
-.textarea-row{ max-width:760px; margin:10px auto 20px; }
+/* Link To 區 */
+.quick-links{
+  max-width:900px; margin:8px auto 8px; display:flex; align-items:center; gap:14px; justify-content:center;
+}
+.quick-label{ font-weight:900; letter-spacing:.6px; margin-right:6px; }
+.quick-btn{
+  width:48px; height:48px; border-radius:50%; border:3px solid #0a0a0a; box-shadow:4px 4px 0 #0a0a0a; display:inline-block;
+  background:#fff center/60% no-repeat;
+}
+.quick-btn.yt{ background-image:url('/static/img/ytmusic.png'); }
+.quick-btn.sp{ background-image:url('/static/img/spotify.png'); }
+.quick-btn.am{ background-image:url('/static/img/applemusic.png'); }
+
+/* 理由輸入框 + 送出 */
+.textarea-row{ max-width:900px; margin:10px auto 12px; }
 .textarea-row textarea{
   width:100%; min-height:120px; padding:12px;
-  background:#fff; border:3px solid #0a0a0a; border-radius:12px;
-  box-shadow:6px 6px 0 #0a0a0a; resize:vertical;
+  background:#fff; border:3px solid #0a0a0a; border-radius:12px; box-shadow:6px 6px 0 #0a0a0a; resize:vertical;
+  font-weight:700;
 }
-
-/* 讓整體置中對齊 */
-.sticky-wrap{ display:block; }
+.submit-row{ display:flex; justify-content:center; margin-bottom:22px; }
+.btn-pill{
+  padding:12px 28px; border:3px solid #0a0a0a; border-radius:999px; background:#ffd21c; box-shadow:6px 6px 0 #0a0a0a; font-weight:900; cursor:pointer;
+}
+.btn-pill:hover{ filter:brightness(.96); }
