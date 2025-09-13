@@ -72,12 +72,7 @@ textarea { resize:vertical; }
   display:flex; align-items:center; justify-content:center;
 }
 
-/* 內框（白色外框） */
-.frame{
-  position:relative;
-  width:86%; height:86%; margin:auto;
-  background:#fff; border:2px solid #0a0a0a; border-radius:8px;
-}
+
 
 /* 文字帶：依 Figma 位置用絕對定位 */
 .band{ position:absolute; left:6%; right:6%;
