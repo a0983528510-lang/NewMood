@@ -85,8 +85,8 @@ textarea { resize:vertical; }
 /* 相片窗（灰色正方形） */
 .photo{
   position:absolute; left:50%; transform:translateX(-50%);
-  top:14%; width:72%; aspect-ratio:1/1;                 /* 正方形 */
-  background:#9a9a9a center/cover no-repeat;            /* AutoFill 用背景圖 */
+  top:10%; width:72%; aspect-ratio:1.5/1;                 /* 正方形 */
+  background:#9a9a9a center/cover no-repeat; border:3px solid #0a0a0a;            /* AutoFill 用背景圖 */
   border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center;
 }
 .cover-icon{ font-size:48px; opacity:.6; }
