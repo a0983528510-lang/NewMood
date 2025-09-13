@@ -3,18 +3,20 @@
   <!-- 預覽區：拍立得翻轉 -->
   <div class="polaroid-stage">
     <div class="polaroid-container">
-      <div class="polaroid instax-classic" id="preview-polaroid">
-        <!-- 背面：灰黑底 -->
+      <div class="polaroid instax-mini" id="preview-polaroid">
+        <!-- 背面 -->
         <div class="polaroid-face back">
           <div class="back-content">
             <div class="back-seal">NewMood</div>
           </div>
         </div>
-        <!-- 正面：白底 + 相框 -->
+        <!-- 正面 -->
         <div class="polaroid-face front">
           <div class="frame">
             <div class="band top"><span id="band-top-text">等待自動帶入…</span></div>
-            <div class="photo" id="preview-cover"><span class="cover-icon" id="cover-icon">🎵</span></div>
+            <div class="photo" id="preview-cover">
+              <span class="cover-icon" id="cover-icon">🎵</span>
+            </div>
             <div class="band bottom"><span id="band-bottom-text"></span></div>
           </div>
         </div>
@@ -30,21 +32,29 @@
   {% else %}
     <div class="sticky-wrap"><div class="sticky blue">
       <form id="post-form" method="post" action="{{ url_for('submit') }}">
-        <label>Link (YouTube Music / Spotify / Apple Music)</label>
-        <input type="url" name="link" id="input-link" placeholder="https://..." />
-
-        <!-- 自動填入的歌名 / 歌手 (隱藏) -->
+        <!-- 隱藏欄位 -->
         <input type="hidden" name="title" id="input-title" />
         <input type="hidden" name="artist" id="input-artist" />
 
-        <label>Why do you recommend it? (optional)</label>
-        <textarea name="reason" id="input-reason" rows="3" placeholder="Short reason..."></textarea>
+        <!-- 連結輸入 + AutoFill -->
+        <div class="form-row">
+          <input type="url" name="link" id="input-link" class="input-url"
+                 placeholder="https://open.spotify.com/... 或 YouTube 連結" />
+          <button class="btn-yellow" type="button" id="btn-autofill">Auto</button>
+        </div>
 
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button class="btn" type="button" id="btn-autofill">AutoFill</button>
+        <!-- 理由輸入框 -->
+        <div class="textarea-row">
+          <textarea name="reason" id="input-reason" rows="4"
+                    placeholder="Why do you recommend it?（可留空）"></textarea>
+        </div>
+
+        <!-- 送出按鈕 -->
+        <div style="display:flex; gap:8px; justify-content:center;">
           <button class="btn" type="submit">Post & Draw</button>
         </div>
       </form>
+
       <div id="draw-result" class="draw-area" style="display:none;"></div>
     </div></div>
   {% endif %}
@@ -85,10 +95,8 @@
       const data = await resp.json();
       if (!data.ok) { alert(data.error || 'AutoFill 失敗'); return; }
       const m = data.meta || {};
-      // 帶入隱藏欄位
       if (m.title)  titleInput.value  = m.title;
       if (m.artist) artistInput.value = m.artist;
-      // 封面顯示
       if (m.thumbnail) {
         cover.style.backgroundImage = 'url(' + m.thumbnail + ')';
         coverIcon.style.display = 'none';
@@ -96,16 +104,11 @@
         cover.style.backgroundImage = '';
         coverIcon.style.display = '';
       }
-      // 更新上緣：歌名 — 暱稱
       const nick = nickname || '';
       bandTop.textContent = (titleInput.value || '(No title)') + (nick ? ' — ' + nick : '');
-      // 下緣：推薦理由
       bandBottom.textContent = reasonInput.value || '';
-      // 翻牌：先背面再正面
       preview.classList.remove('flip');
-      setTimeout(() => {
-        preview.classList.add('flip');
-      }, 180);
+      setTimeout(() => { preview.classList.add('flip'); }, 180);
     }
 
     // 綁定事件
@@ -139,16 +142,13 @@
           const d = data.drawn;
           const signer    = d.nickname ? d.nickname : '';
           const reasonTxt = d.reason   ? d.reason   : '';
-          // 預組背景樣式，避免巢狀反引號
           const bgStyle = d.thumbnail ? ' style="background-image:url(' + d.thumbnail + ')"' : '';
-          // Play 連結
           let linkHtml = '';
           if (d.link) {
             linkHtml = '<span class="play-link" style="margin-left:6px;"><a href="' + d.link + '" target="_blank" rel="noopener">Play</a></span>';
           }
-          // 組出 HTML
           resultDiv.innerHTML = '<div class="polaroid-container">' +
-            '<div class="polaroid instax-classic" id="draw-polaroid">' +
+            '<div class="polaroid instax-mini" id="draw-polaroid">' +
               '<div class="polaroid-face back">' +
                 '<div class="back-content"><div class="back-seal">NewMood</div></div>' +
               '</div>' +
@@ -168,7 +168,6 @@
         } else {
           resultDiv.textContent = 'No other songs yet—invite friends!';
         }
-        // 重置表單
         form.reset();
       });
     }

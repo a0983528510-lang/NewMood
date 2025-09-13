@@ -32,209 +32,98 @@ textarea { resize:vertical; }
 .note-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; margin-top:12px; }
 .dim { opacity:0.6; font-size:12px; margin-top:6px; }
 
-/* ===== Polaroid Styles ===== */
-.polaroid-stage { display:flex; justify-content:center; margin:24px 0; }
-.draw-area { display:flex; justify-content:center; margin-top:12px; }
+/* ======== Polaroid + Form layout to match Figma ======== */
 
-.polaroid-container { width:260px; height:320px; perspective:1000px; margin:0 auto; }
-.polaroid { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .6s ease; }
-.polaroid.flip { transform: rotateY(180deg); }
-.polaroid-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:12px; box-shadow:6px 6px 0 #0a0a0a; }
+/* 背景（若你已在別處設定可忽略這段） */
+/* body { background: url(/static/img/brick.jpg) center/cover fixed; } */
 
-/* 背面：灰黑底 */
-.polaroid-face.back { background:#1e1e1e; color:#fff; border:3px solid #0a0a0a; }
-.back-content { height:100%; display:flex; align-items:center; justify-content:center; }
-.back-seal { color:#e8e8e8; font-weight:700; letter-spacing:.6px; border:2px dashed #9a9a9a; padding:8px 12px; border-radius:8px; }
+.polaroid-stage{
+  display:flex; justify-content:center; align-items:center;
+  margin: 40px 0 24px;
+}
+.polaroid-container{ width: clamp(280px, 32vw, 360px); perspective:1000px; }
 
-/* 正面：白底 + 外框 + 相紙窗 */
-.polaroid-face.front { background:#fff; border:3px solid #0a0a0a; transform: rotateY(180deg); display:flex; align-items:center; justify-content:center; }
-.frame {
-  width:86%;
-  height:86%;
-  background:#fff;
-  border:2px solid #0a0a0a;
-  border-radius:10px;
-  display:grid;
-  grid-template-rows: 22% 56% 22%; /* 上緣／照片窗(正方)／下緣 */
+.polaroid{
+  position:relative; width:100%;
+  aspect-ratio:54/86; /* Instax Mini 比例（直式） */
+  transform-style:preserve-3d; transition:transform .6s ease;
+}
+.polaroid.flip{ transform: rotateY(180deg); }
+
+.polaroid-face{
+  position:absolute; inset:0; backface-visibility:hidden;
+  border-radius:10px; box-shadow:6px 6px 0 #0a0a0a;
 }
 
-/* 上下緣文字帶 */
-.band { display:flex; align-items:center; justify-content:center; padding:0 8px; }
-.band.top { border-bottom:2px solid #0a0a0a; font-weight:700; }
-.band.bottom { border-top:2px solid #0a0a0a; }
-.band span { width:100%; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-/* 中間方形相紙窗：確保是正方、封面鋪滿 */
-.photo {
-  width:100%;
-  height:100%;
-  background:#f3f3f3 center/cover no-repeat;
+/* 背面 */
+.polaroid-face.back{
+  background:#1e1e1e; color:#fff; border:3px solid #0a0a0a;
   display:flex; align-items:center; justify-content:center;
 }
-.cover-icon { font-size:48px; opacity:.6; }
-.play-link a { border-bottom:2px solid #0a0a0a; }
+.back-seal{
+  color:#e8e8e8; font-weight:700; letter-spacing:.4px;
+  border:2px dashed #9a9a9a; padding:8px 12px; border-radius:8px;
+}
 
-/* ===== Polaroid Styles (rework) ===== */
-/* 調整舞台與容器尺寸：更接近真實比例、整體再大一些 */
-.polaroid-stage {
-  display: flex;
-  justify-content: center;
-  margin: 24px 0;
-}
-.polaroid-container {
-  width: 320px; /* 原260→320，視需要再調 */
-  /* 預設先給個中性比例；真正比例由下面樣式決定 */
-  height: auto;
-  margin: 0 auto;
-  perspective: 1000px;
-}
-.polaroid {
-  position: relative;
-  width: 100%;
-  transform-style: preserve-3d;
-  transition: transform .6s ease;
-}
-.polaroid.flip { transform: rotateY(180deg); }
-.polaroid-face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
-  border-radius: 12px;
-  box-shadow: 6px 6px 0 #0a0a0a;
-}
-/* 背面維持不變 */
-.polaroid-face.back {
-  background: #1e1e1e;
-  color: #fff;
-  border: 3px solid #0a0a0a;
-}
-.back-content {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.back-seal {
-  color: #e8e8e8;
-  font-weight: 700;
-  letter-spacing: .6px;
-  border: 2px dashed #9a9a9a;
-  padding: 8px 12px;
-  border-radius: 8px;
-}
-/* 正面：拿掉內部分隔線，只保留外框；由不同格式控制比例與邊距 */
-.polaroid-face.front {
-  background: #fff;
-  border: 3px solid #0a0a0a;
+/* 正面 */
+.polaroid-face.front{
+  background:#fff; border:3px solid #0a0a0a;
   transform: rotateY(180deg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-/* 共同：影像窗 */
-.photo {
-  background: #f3f3f3 center/cover no-repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-.cover-icon {
-  font-size: 48px;
-  opacity: .6;
-}
-/* === 文字帶（保留文字、移除分隔線）=== */
-.band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.band span {
-  width: 100%;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* 去掉上/下分隔線 */
-.band.top,
-.band.bottom { border: none; }
-.band.top { font-weight: 700; }
-.band.bottom {}
-
-/* =========================
-   A) instax-mini 造型（86×54mm；影像 62×46mm；底邊最厚）
-   在 .polaroid 元素上加 class="instax-mini"
-   ========================= */
-.polaroid.instax-mini .polaroid-face.front {
-  /* 高:寬 = 86:54 ≈ 1.593；用 aspect-ratio 逼近真實比例 */
-  aspect-ratio: 54 / 86; /* 寬 / 高（直式卡片）*/
-  width: 280px; /* 你可再放大縮小 */
-  height: auto;
-}
-.polaroid.instax-mini .photo {
-  /* 影像 62×46mm；用內邊距製作白邊：
-     左右 ≈ (54-46)/2=4mm；上+下 ≈ (86-62)=24mm（下邊比上邊厚很多） */
-  position: absolute;
-  /* 以整張為 54×86 的比例，轉成百分比邏輯：
-     左右白邊約 4/54 ≈ 7.4%；上白邊約 6/86 ≈ 7%（略薄）；
-     下白邊約 18/86 ≈ 21%（明顯厚） */
-  left: 7.4%;
-  right: 7.4%;
-  top: 7%;
-  bottom: 21%;
-}
-.polaroid.instax-mini .band.top {
-  /* instax 上緣窄；讓文字帶占薄薄一條（若不需要可 display:none） */
-  top: 2%;
-  height: 8%;
-}
-.polaroid.instax-mini .band.bottom {
-  /* 下緣常用來寫字；留在厚底邊中間 */
-  bottom: 6%;
-  height: 12%;
+  display:flex; align-items:center; justify-content:center;
 }
 
-/* =========================
-   B) polaroid-classic 造型（107×88mm；影像 79×79mm）
-   在 .polaroid 元素上加 class="polaroid-classic"
-   ========================= */
-.polaroid.polaroid-classic .polaroid-face.front {
-  /* 高:寬 = 107:88 ≈ 1.216（直式） */
-  aspect-ratio: 88 / 107; /* 寬 / 高 */
-  width: 300px; /* 可調 */
-  height: auto;
-}
-.polaroid.polaroid-classic .photo {
-  /* 影像 79×79mm（正方）；水平白邊：(88-79)/2 ≈ 4.5mm → 約 5.1%；
-     垂直白邊總計 28mm，典型上薄下厚 → 上約 6mm(≈5.6%)、下約 22mm(≈20.6%) */
-  position: absolute;
-  left: 5.1%;
-  right: 5.1%;
-  top: 5.6%;
-  bottom: 20.6%;
-  aspect-ratio: 1 / 1; /* 正方形視覺 */
-}
-.polaroid.polaroid-classic .band.top {
-  top: 2.5%;
-  height: 8%;
-}
-.polaroid.polaroid-classic .band.bottom {
-  bottom: 7%;
-  height: 12%;
+/* 內框（白色外框） */
+.frame{
+  position:relative;
+  width:86%; height:86%; margin:auto;
+  background:#fff; border:2px solid #0a0a0a; border-radius:8px;
 }
 
-/* ==== 移除舊的「內框格線」樣式（frame / band 的邊線）==== */
-.frame {
-  /* 保留容器以相容你原本 HTML，但不再顯示邊框或分隔線，也不再用 grid 切三段 */
-  position: absolute;
-  inset: 0;
-  border: none;
-  background: transparent;
-  display: block;
+/* 文字帶：依 Figma 位置用絕對定位 */
+.band{ position:absolute; left:6%; right:6%;
+  display:flex; align-items:center; justify-content:center; padding:2px 6px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2;
 }
+.band.top{ top:5%; height:10%; font-weight:700; }
+.band.bottom{ bottom:6%; height:14%; }
+
+/* 相片窗（灰色正方形） */
+.photo{
+  position:absolute; left:50%; transform:translateX(-50%);
+  top:14%; width:72%; aspect-ratio:1/1;                 /* 正方形 */
+  background:#9a9a9a center/cover no-repeat;            /* AutoFill 用背景圖 */
+  border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center;
+}
+.cover-icon{ font-size:48px; opacity:.6; }
+
+/* 也支援 <img> 放縮圖的情境 */
+.photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+/* ===== Form to match Figma bar ===== */
+.form-row{
+  max-width: 760px; margin: 12px auto 6px;
+  display:flex; align-items:center; gap:10px;
+}
+.input-url{
+  flex:1; height:46px; padding:10px 12px;
+  background:#fff; border:3px solid #0a0a0a; border-radius:10px;
+  box-shadow:6px 6px 0 #0a0a0a;
+}
+
+.btn-yellow{
+  height:46px; min-width:64px; padding:0 12px; cursor:pointer;
+  background:#ffd21c; border:3px solid #0a0a0a; border-radius:10px;
+  box-shadow:6px 6px 0 #0a0a0a; font-weight:700;
+}
+.btn-yellow:hover{ filter:brightness(0.95); }
+
+/* 下方大白框的樣式（輸入理由） */
+.textarea-row{ max-width:760px; margin:10px auto 20px; }
+.textarea-row textarea{
+  width:100%; min-height:120px; padding:12px;
+  background:#fff; border:3px solid #0a0a0a; border-radius:12px;
+  box-shadow:6px 6px 0 #0a0a0a; resize:vertical;
+}
+
+/* 讓整體置中對齊 */
+.sticky-wrap{ display:block; }
