@@ -1,122 +1,360 @@
-/* ===== 背景（你已有 brick 圖可沿用；此段僅保留） ===== */
-/* body { background: url(/static/img/brick.jpg) center/cover fixed; } */
-
-/* ===== 預覽舞台 ===== */
-.polaroid-stage{ display:flex; justify-content:center; align-items:center; margin:36px 0 20px; }
-.polaroid-container{ width: clamp(300px, 32vw, 380px); perspective:1000px; }
-
-/* 卡片本體（Instax Mini 比例） */
-.polaroid{
-  position:relative; width:100%; aspect-ratio:54 / 86;
-  transform-style:preserve-3d; transition:transform .6s ease;
-}
-.polaroid.flip{ transform: rotateY(180deg); }
-/* 旋轉一圈動畫（AutoFill 時一起套用） */
-.polaroid.spin { animation: spinOnce .9s ease both; }
-@keyframes spinOnce { from{ transform: rotateY(0) rotate(0deg); } to{ transform: rotateY(180deg) rotate(360deg); } }
-
-.polaroid-face{
-  position:absolute; inset:0; backface-visibility:hidden;
-  border-radius:10px; box-shadow:6px 6px 0 #0a0a0a;
+/* 基礎樣式 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-/* ===== 背面：用幾何塊組成黑色卡 ===== */
-.polaroid-face.back{ background:#1e1e1e; border:3px solid #0a0a0a; display:flex; }
-.back-card{
-  position:relative; width:88%; height:92%; margin:auto; background:#2a2a2a; border-radius:8px;
-  box-shadow: inset 0 0 0 2px #0a0a0a;
-}
-.back-strip{ position:absolute; left:0; right:0; height:12%; background:#6f6f6f; }
-.back-strip.top{ top:0; border-radius:8px 8px 0 0; }
-.back-strip.bottom{ bottom:0; border-radius:0 0 8px 8px; }
-.back-dash{
-  position:absolute; left:50%; top:45%; transform:translate(-50%,-50%);
-  color:#ddd; padding:10px 16px; border:2px dashed #cfcfcf; border-radius:12px; font-weight:700; opacity:.8;
-}
-.back-brand{
-  position:absolute; bottom:4%; left:0; right:0; display:flex; gap:28px; justify-content:center; color:#eaeaea; opacity:.9; font-weight:800;
+body {
+    background-image: url('static/images/brickwall.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* 固定背景 */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #444;
+    font-family: 'Roboto', sans-serif;
 }
 
-/* ===== 正面（白色拍立得外框） ===== */
-.polaroid-face.front{ background:#fff; border:3px solid #0a0a0a; transform: rotateY(180deg); display:flex; }
-.frame{
-  position:relative; width:86%; height:86%; margin:auto; background:#fff; border:2px solid #0a0a0a; border-radius:8px;
-  display:grid; grid-template-rows: auto 1fr;
+/* 標頭區塊 */
+.header {
+    width: 100%;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Knewave', cursive;
 }
 
-/* 相片窗：置中、略靠上；右側可留出美術空間 */
-.photo{
-  position:relative; margin:6% 7.4% 6% 7.4%;
-  background:transparent;
-  display:grid; grid-template-rows: 1fr; grid-template-columns: 1fr;
+.logo {
+    display: flex;
+    align-items: center;
 }
 
-/* 實際封面（遮罩框） */
-.cover{
-  width:100%; aspect-ratio:1/1; border-radius:4px;
-  background:#9a9a9a center/cover no-repeat; overflow:hidden;
-  box-shadow:0 0 0 2px #0a0a0a inset;
-}
-.cover-icon{ font-size:48px; opacity:.6; display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
-
-/* 黃色斜體標題（覆蓋在相片上角，與 Figma 相似） */
-.overlay-title{
-  position:absolute; right:-2%; top:4%;
-  transform: rotate(-12deg);
-  font-weight:900; font-size: clamp(18px, 2.1vw, 28px);
-  color:#ffd21c; text-shadow: -2px 2px 0 #0a0a0a, 2px 2px 0 #0a0a0a;
-  pointer-events:none; user-select:none; white-space:nowrap; max-width:120%; overflow:hidden; text-overflow:ellipsis;
+.logo img {
+    height: 30px;
+    margin-right: 5px;
 }
 
-/* 文字區：推薦人、理由、右下 LOGO */
-.info{
-  position:relative; margin: 0 7.4% 6% 7.4%;
-  display:grid; grid-template-rows: auto 1fr; gap:8px;
+.logo h1 {
+    font-size: 24px;
+    font-weight: normal;
+    color: #444;
 }
-.signer{ font-weight:900; letter-spacing:.4px; font-size: clamp(18px, 2vw, 24px); }
-.reason{ color:#222; font-weight:700; opacity:.9; line-height:1.35; }
-.brand-mark{ position:absolute; right:0; bottom:-2px; font-weight:900; }
 
-/* ===== 表單區（Figma 樣式） ===== */
-.form-row{
-  max-width: 900px; margin: 8px auto 6px;
-  display:flex; align-items:center; gap:10px; justify-content:center;
+.nav-links {
+    display: flex;
+    gap: 15px;
 }
-.input-url{
-  flex:1; height:46px; padding:10px 12px;
-  background:#fff; border:3px solid #0a0a0a; border-radius:10px;
-  box-shadow:6px 6px 0 #0a0a0a;
-  font-weight:800; letter-spacing:.3px;
-}
-.btn-yellow{
-  height:46px; min-width:72px; padding:0 16px; cursor:pointer;
-  background:#ffd21c; border:3px solid #0a0a0a; border-radius:10px; font-weight:900;
-  box-shadow:6px 6px 0 #0a0a0a;
-}
-.btn-yellow:hover{ filter:brightness(.96); }
 
-/* Link To 區 */
-.quick-links{
-  max-width:900px; margin:8px auto 8px; display:flex; align-items:center; gap:14px; justify-content:center;
+.nav-button {
+    text-decoration: none;
+    color: #444;
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    background-color: #fddb69;
+    padding: 8px 15px;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s;
 }
-.quick-label{ font-weight:900; letter-spacing:.6px; margin-right:6px; }
-.quick-btn{
-  width:48px; height:48px; border-radius:50%; border:3px solid #0a0a0a; box-shadow:4px 4px 0 #0a0a0a; display:inline-block;
-  background:#fff center/60% no-repeat;
-}
-.quick-btn.yt{ background-image:url('/static/img/ytmusic.png'); }
-.quick-btn.sp{ background-image:url('/static/img/spotify.png'); }
-.quick-btn.am{ background-image:url('/static/img/applemusic.png'); }
 
-/* 理由輸入框 + 送出 */
-.textarea-row{ max-width:900px; margin:10px auto 12px; }
-.textarea-row textarea{
-  width:100%; min-height:120px; padding:12px;
-  background:#fff; border:3px solid #0a0a0a; border-radius:12px; box-shadow:6px 6px 0 #0a0a0a; resize:vertical;
-  font-weight:700;
+.nav-button:hover {
+    background-color: #fcd241;
 }
-.submit-row{ display:flex; justify-content:center; margin-bottom:22px; }
-.btn-pill{
-  padding:12px 28px; border:3px solid #0a0a0a; border-radius:999px; background:#ffd21c; box-shadow:6px 6px 0 #0a0a0a; font-weight:900; cursor:pointer;
+
+.nav-logout {
+    color: #444;
 }
-.btn-pill:hover{ filter:brightness(.96); }
+
+/* 主要內容區塊 */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
+    width: 100%;
+}
+
+/* 拍立得樣式 */
+.polaroid-stage {
+    perspective: 1000px;
+}
+
+.polaroid-container {
+    position: relative;
+    width: 300px; /* 寬度配合 Figma */
+    height: 400px; /* 高度配合 Figma */
+}
+
+.polaroid {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 1s;
+    position: relative;
+}
+
+.polaroid.flip {
+    transform: rotateY(180deg);
+}
+
+.polaroid-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.polaroid-face.front {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    transform: rotateY(0deg);
+}
+
+.polaroid-face.back {
+    background-color: transparent;
+    transform: rotateY(180deg);
+}
+
+.frame {
+    width: 100%;
+    height: 100%;
+    padding: 15px 15px 25px 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.photo {
+    width: 100%;
+    flex-grow: 1;
+    position: relative;
+    background-color: #ddd;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cover {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cover-icon {
+    font-size: 40px;
+    color: #999;
+}
+
+.overlay-title {
+    font-family: 'Knewave', cursive;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 14px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.info {
+    padding-top: 15px;
+    text-align: center;
+}
+
+.signer {
+    font-family: 'Knewave', cursive;
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.reason {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.brand-mark {
+    font-family: 'Knewave', cursive;
+    font-size: 12px;
+    color: #888;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+}
+
+/* 拍立得背面樣式 (來自舊程式碼) */
+.back-card {
+    width: 85%;
+    height: 90%;
+    background: linear-gradient(145deg, #eee, #f9f9f9);
+    border-radius: 10px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    position: relative;
+    padding: 20px;
+}
+
+.back-strip {
+    height: 10px;
+    background: #6c88e9;
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+.back-strip.top { top: 0; border-radius: 10px 10px 0 0; }
+.back-strip.bottom { bottom: 0; border-radius: 0 0 10px 10px; }
+
+.back-dash {
+    border: 2px dashed #bbb;
+    padding: 50px 20px;
+    margin: 30px 0;
+    text-align: center;
+    color: #999;
+    font-size: 18px;
+    font-family: 'Knewave', cursive;
+}
+
+.back-brand {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    font-family: 'Knewave', cursive;
+}
+
+/* 輸入區塊 */
+.sticky-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.sticky {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-row {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+}
+
+.input-url {
+    flex-grow: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.btn-yellow {
+    background-color: #fddb69;
+    border: none;
+    padding: 0 25px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s;
+    font-family: 'Roboto', sans-serif;
+}
+
+.btn-yellow:hover {
+    background-color: #fcd241;
+}
+
+.quick-links {
+    display: flex;
+    align-items: center;
+    margin: 15px 0;
+    width: 100%;
+}
+
+.quick-label {
+    font-size: 14px;
+    color: #666;
+    margin-right: 10px;
+    font-weight: bold;
+    font-family: 'Roboto', sans-serif;
+}
+
+.quick-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-right: 10px;
+}
+
+.quick-btn.yt { background-color: #ff0000; }
+.quick-btn.sp { background-color: #1ed760; }
+.quick-btn.am { background-color: #fe2a4c; }
+
+.textarea-row {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: none;
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.submit-row {
+    width: 100%;
+}
+
+.btn-pill {
+    width: 100%;
+    padding: 15px;
+    background-color: #fddb69;
+    border: none;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #444;
+    cursor: pointer;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s;
+    font-family: 'Knewave', cursive;
+}
+
+.btn-pill:hover {
+    background-color: #fcd241;
+}
+
+/* 抽卡結果樣式 */
+.draw-area {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.play-link a {
+    color: #fddb69;
+    text-decoration: none;
+    font-weight: bold;
+}
