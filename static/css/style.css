@@ -1,5 +1,5 @@
 /* =========================
-   字體（可選：若你自架 NaniHand，放開這段並調整路徑）
+   字體設定（如有手寫字體可開啟）
    ========================= */
 /*
 @font-face{
@@ -12,7 +12,7 @@
 */
 
 /* =========================
-   基礎
+   基本樣式
    ========================= */
 :root {
   --ink: #0a0a0a;
@@ -21,18 +21,21 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--ink);
-  background: #7fd1eb; /* 測試背景；要用磚牆可改成：url('/static/img/brick.jpg') center/cover fixed */
+body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+
+/* ====== Topbar ====== */
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 12px; background:#fff; border-bottom:3px solid var(--ink);
 }
+.brand { display:flex; align-items:center; gap:6px; }
+.logo { width:20px; height:20px; }   /* 縮小 logo */
+.brand-text { font-size:18px; font-weight:bold; }
 
 /* =========================
-   版面容器（沿用你的結構）
+   Sticky notes / container
    ========================= */
-.container { max-width: 900px; margin: 24px auto; padding: 0 12px; }
+.container { max-width:900px; margin:24px auto; padding:0 12px; }
 .sticky-wrap { display:flex; justify-content:center; }
 .sticky { width:100%; max-width:760px; padding:16px; border:3px solid var(--ink); border-radius:14px; background:#fff; box-shadow:6px 6px 0 var(--ink); }
 .sticky.yellow { background:#fff9b1; }
@@ -46,14 +49,12 @@ textarea { resize:vertical; }
 /* =========================
    照片版 Polaroid
    ========================= */
-/* 舞台 */
 .polaroid-stage{ display:flex; justify-content:center; align-items:center; margin:36px 0 20px; }
 .polaroid-container{ width: 302px; }
 
-/* 卡片（無中間夾層） */
 .polaroid{
-  width: 302px;               /* 依最終貼合尺寸 */
-  aspect-ratio: 302 / 430;    /* 與設計圖相同比例 */
+  width: 302px;
+  aspect-ratio: 302 / 430;
   position: relative;
   transform-style: preserve-3d;
   transition: transform .6s ease;
@@ -61,7 +62,7 @@ textarea { resize:vertical; }
 }
 .polaroid.flip { transform: rotateY(180deg); }
 
-/* 正反兩面直接用整張圖 */
+/* 正反兩面直接用整張圖片 */
 .face{
   position:absolute; inset:0; backface-visibility:hidden;
   background-size: cover; background-position: center;
@@ -72,22 +73,18 @@ textarea { resize:vertical; }
 .face.front { background-image: url('/static/img/front.png'); transform: rotateY(180deg); }
 .face.back  { background-image: url('/static/img/back.png'); }
 
-/* 縮圖窗（綠色區域對位） */
+/* 縮圖窗（綠色區域位置） */
 .window{
   position: absolute;
   left: 8.5%;
   right: 8.5%;
   top: 3.75%;
-  aspect-ratio: 1 / 1; /* 正方形 */
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: 6px;
-
-  /* 同時支援 background 當縮圖（雙保險） */
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-
-  /* 你的陰影 */
   box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
               rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
 }
@@ -98,7 +95,7 @@ textarea { resize:vertical; }
   object-fit: cover;
 }
 
-/* 歌名 — 歌手（覆蓋在卡面上） */
+/* 歌名 — 歌手（覆蓋在卡面） */
 .song-line{
   position: absolute;
   right: 6%;
@@ -114,7 +111,6 @@ textarea { resize:vertical; }
   color: var(--yellow);
   font-weight: 700;
   font-size: 18px;
-  letter-spacing: .3px;
 }
 .song-line .en{
   font-family: 'Knewave', cursive;
@@ -124,7 +120,7 @@ textarea { resize:vertical; }
 }
 
 /* =========================
-   測試控制列（存在就美化；沒有也不影響）
+   控制列（測試用）
    ========================= */
 .controls{
   display:flex; gap:8px; justify-content:center; padding:16px;
@@ -140,9 +136,10 @@ textarea { resize:vertical; }
 }
 
 /* =========================
-   RWD 微調
+   RWD
    ========================= */
 @media (max-width: 380px){
   .polaroid-container, .polaroid { width: 86vw; }
   .song-line .zh, .song-line .en { font-size: 16px; }
+  .logo { width:16px; height:16px; }
 }
