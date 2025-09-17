@@ -1,360 +1,148 @@
-/* 基礎樣式 */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+/* =========================
+   字體（可選：若你自架 NaniHand，放開這段並調整路徑）
+   ========================= */
+/*
+@font-face{
+  font-family: 'NaniHand';
+  src: url('/static/fonts/NaniFont-semiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+*/
+
+/* =========================
+   基礎
+   ========================= */
+:root {
+  --ink: #0a0a0a;
+  --yellow: #ffd21c;
+  --yellow2: #fff200;
 }
 
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
-    background-image: url('static/images/brickwall.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed; /* 固定背景 */
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #444;
-    font-family: 'Roboto', sans-serif;
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: #7fd1eb; /* 測試背景；要用磚牆可改成：url('/static/img/brick.jpg') center/cover fixed */
 }
 
-/* 標頭區塊 */
-.header {
-    width: 100%;
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: 'Knewave', cursive;
+/* =========================
+   版面容器（沿用你的結構）
+   ========================= */
+.container { max-width: 900px; margin: 24px auto; padding: 0 12px; }
+.sticky-wrap { display:flex; justify-content:center; }
+.sticky { width:100%; max-width:760px; padding:16px; border:3px solid var(--ink); border-radius:14px; background:#fff; box-shadow:6px 6px 0 var(--ink); }
+.sticky.yellow { background:#fff9b1; }
+.sticky.blue { background:#cfe8ff; }
+.btn { display:inline-block; padding:8px 12px; border:2px solid var(--ink); border-radius:10px; background:#fff; cursor:pointer; }
+label { display:block; margin-top:8px; }
+input[type=text], input[type=url], textarea { width:100%; padding:8px; border:2px solid var(--ink); border-radius:8px; background:#fff; }
+textarea { resize:vertical; }
+.draw-area { display:flex; justify-content:center; margin-top:12px; }
+
+/* =========================
+   照片版 Polaroid
+   ========================= */
+/* 舞台 */
+.polaroid-stage{ display:flex; justify-content:center; align-items:center; margin:36px 0 20px; }
+.polaroid-container{ width: 302px; }
+
+/* 卡片（無中間夾層） */
+.polaroid{
+  width: 302px;               /* 依最終貼合尺寸 */
+  aspect-ratio: 302 / 430;    /* 與設計圖相同比例 */
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .6s ease;
+  cursor: pointer;
+}
+.polaroid.flip { transform: rotateY(180deg); }
+
+/* 正反兩面直接用整張圖 */
+.face{
+  position:absolute; inset:0; backface-visibility:hidden;
+  background-size: cover; background-position: center;
+  border-radius: 10px;
+  border: 3px solid var(--ink);
+  box-shadow: 0 8px 0 var(--ink);
+}
+.face.front { background-image: url('/static/img/front.png'); transform: rotateY(180deg); }
+.face.back  { background-image: url('/static/img/back.png'); }
+
+/* 縮圖窗（綠色區域對位） */
+.window{
+  position: absolute;
+  left: 8.5%;
+  right: 8.5%;
+  top: 3.75%;
+  aspect-ratio: 1 / 1; /* 正方形 */
+  overflow: hidden;
+  border-radius: 6px;
+
+  /* 同時支援 background 當縮圖（雙保險） */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  /* 你的陰影 */
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
+              rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+}
+.window img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
+/* 歌名 — 歌手（覆蓋在卡面上） */
+.song-line{
+  position: absolute;
+  right: 6%;
+  top: 7.5%;
+  max-width: 72%;
+  transform: rotate(-10deg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: -2px 2px 0 var(--ink), 2px 2px 0 var(--ink);
+  pointer-events: none; user-select: none;
+}
+.song-line .zh{
+  font-family: 'NaniHand', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  color: var(--yellow);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: .3px;
+}
+.song-line .en{
+  font-family: 'Knewave', cursive;
+  color: var(--yellow2);
+  font-weight: 700;
+  font-size: 18px;
 }
 
-.logo img {
-    height: 30px;
-    margin-right: 5px;
+/* =========================
+   測試控制列（存在就美化；沒有也不影響）
+   ========================= */
+.controls{
+  display:flex; gap:8px; justify-content:center; padding:16px;
+  background:#fff; border-top:1px solid #e5e5e5;
+}
+.controls input{
+  width:min(680px, 80vw);
+  padding:10px 12px; border:2px solid var(--ink); border-radius:10px;
+}
+.controls button{
+  padding:10px 14px; border:2px solid var(--ink); border-radius:10px;
+  background:var(--yellow); font-weight:700; cursor:pointer;
 }
 
-.logo h1 {
-    font-size: 24px;
-    font-weight: normal;
-    color: #444;
-}
-
-.nav-links {
-    display: flex;
-    gap: 15px;
-}
-
-.nav-button {
-    text-decoration: none;
-    color: #444;
-    font-family: 'Roboto', sans-serif;
-    font-weight: bold;
-    background-color: #fddb69;
-    padding: 8px 15px;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
-}
-
-.nav-button:hover {
-    background-color: #fcd241;
-}
-
-.nav-logout {
-    color: #444;
-}
-
-/* 主要內容區塊 */
-.main-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 50px;
-    width: 100%;
-}
-
-/* 拍立得樣式 */
-.polaroid-stage {
-    perspective: 1000px;
-}
-
-.polaroid-container {
-    position: relative;
-    width: 300px; /* 寬度配合 Figma */
-    height: 400px; /* 高度配合 Figma */
-}
-
-.polaroid {
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform 1s;
-    position: relative;
-}
-
-.polaroid.flip {
-    transform: rotateY(180deg);
-}
-
-.polaroid-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.polaroid-face.front {
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    transform: rotateY(0deg);
-}
-
-.polaroid-face.back {
-    background-color: transparent;
-    transform: rotateY(180deg);
-}
-
-.frame {
-    width: 100%;
-    height: 100%;
-    padding: 15px 15px 25px 15px;
-    display: flex;
-    flex-direction: column;
-}
-
-.photo {
-    width: 100%;
-    flex-grow: 1;
-    position: relative;
-    background-color: #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.cover {
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.cover-icon {
-    font-size: 40px;
-    color: #999;
-}
-
-.overlay-title {
-    font-family: 'Knewave', cursive;
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    font-size: 14px;
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.info {
-    padding-top: 15px;
-    text-align: center;
-}
-
-.signer {
-    font-family: 'Knewave', cursive;
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-.reason {
-    font-family: 'Roboto', sans-serif;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #666;
-    margin-bottom: 10px;
-}
-
-.brand-mark {
-    font-family: 'Knewave', cursive;
-    font-size: 12px;
-    color: #888;
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-}
-
-/* 拍立得背面樣式 (來自舊程式碼) */
-.back-card {
-    width: 85%;
-    height: 90%;
-    background: linear-gradient(145deg, #eee, #f9f9f9);
-    border-radius: 10px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-    position: relative;
-    padding: 20px;
-}
-
-.back-strip {
-    height: 10px;
-    background: #6c88e9;
-    position: absolute;
-    left: 0;
-    right: 0;
-}
-.back-strip.top { top: 0; border-radius: 10px 10px 0 0; }
-.back-strip.bottom { bottom: 0; border-radius: 0 0 10px 10px; }
-
-.back-dash {
-    border: 2px dashed #bbb;
-    padding: 50px 20px;
-    margin: 30px 0;
-    text-align: center;
-    color: #999;
-    font-size: 18px;
-    font-family: 'Knewave', cursive;
-}
-
-.back-brand {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    font-family: 'Knewave', cursive;
-}
-
-/* 輸入區塊 */
-.sticky-wrap {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-}
-
-.sticky {
-    width: 100%;
-    max-width: 500px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.form-row {
-    display: flex;
-    width: 100%;
-    gap: 10px;
-}
-
-.input-url {
-    flex-grow: 1;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    font-family: 'Roboto', sans-serif;
-}
-
-.btn-yellow {
-    background-color: #fddb69;
-    border: none;
-    padding: 0 25px;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
-    font-family: 'Roboto', sans-serif;
-}
-
-.btn-yellow:hover {
-    background-color: #fcd241;
-}
-
-.quick-links {
-    display: flex;
-    align-items: center;
-    margin: 15px 0;
-    width: 100%;
-}
-
-.quick-label {
-    font-size: 14px;
-    color: #666;
-    margin-right: 10px;
-    font-weight: bold;
-    font-family: 'Roboto', sans-serif;
-}
-
-.quick-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    margin-right: 10px;
-}
-
-.quick-btn.yt { background-color: #ff0000; }
-.quick-btn.sp { background-color: #1ed760; }
-.quick-btn.am { background-color: #fe2a4c; }
-
-.textarea-row {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-textarea {
-    width: 100%;
-    height: 80px;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    resize: none;
-    font-size: 16px;
-    font-family: 'Roboto', sans-serif;
-}
-
-.submit-row {
-    width: 100%;
-}
-
-.btn-pill {
-    width: 100%;
-    padding: 15px;
-    background-color: #fddb69;
-    border: none;
-    border-radius: 30px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #444;
-    cursor: pointer;
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-    transition: background-color 0.3s;
-    font-family: 'Knewave', cursive;
-}
-
-.btn-pill:hover {
-    background-color: #fcd241;
-}
-
-/* 抽卡結果樣式 */
-.draw-area {
-    margin-top: 30px;
-    text-align: center;
-}
-
-.play-link a {
-    color: #fddb69;
-    text-decoration: none;
-    font-weight: bold;
+/* =========================
+   RWD 微調
+   ========================= */
+@media (max-width: 380px){
+  .polaroid-container, .polaroid { width: 86vw; }
+  .song-line .zh, .song-line .en { font-size: 16px; }
 }

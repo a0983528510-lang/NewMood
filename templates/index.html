@@ -1,233 +1,194 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewMood</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Knewave&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NewMood Logo">
-            <h1>NewMood</h1>
-        </div>
-        <nav class="nav-links">
-            <a href="{{ url_for('index') }}" class="nav-button">Home</a>
-            <a href="{{ url_for('history') }}" class="nav-button">History</a>
-            <a href="{{ url_for('profile_get') }}" class="nav-button">Profile</a>
-            <a href="{{ url_for('logout') }}" class="nav-button nav-logout">Logout</a>
-        </nav>
-    </header>
+{% extends 'base.html' %}
+{% block content %}
+  <!-- 預覽區：拍立得翻轉（照片版） -->
+  <div class="polaroid-stage">
+    <div class="polaroid-container">
+      <div class="polaroid" id="preview-polaroid">
+        <!-- 背面（整張貼圖） -->
+        <div class="face back" title="點擊翻面"></div>
 
-    <main class="main-content">
-        <div class="polaroid-stage">
+        <!-- 正面（整張貼圖） -->
+        <div class="face front" title="點擊翻面">
+          <!-- 縮圖窗（綠色區域對位） -->
+          <div class="window" id="preview-window">
+            <img id="preview-thumb" alt="thumbnail" />
+          </div>
+          <!-- 黃字：歌名 — 歌手（中文/英文可各自字體） -->
+          <div class="song-line" id="preview-songline">
+            <span class="zh">(No title)</span><span class="sep" style="display:none;"> — </span><span class="en"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if not user %}
+    <div class="sticky-wrap"><div class="sticky yellow">
+      <p>Login to post your song and draw a random pick from others.</p>
+      <a class="btn" href="{{ url_for('login') }}">Login with Google</a>
+    </div></div>
+  {% else %}
+    <div class="sticky-wrap"><div class="sticky blue" style="background:transparent;border:none;box-shadow:none;">
+      <form id="post-form" method="post" action="{{ url_for('submit') }}">
+        <label>Link (YouTube Music / Spotify / Apple Music)</label>
+        <input type="url" name="link" id="input-link" placeholder="https://..." />
+
+        <!-- 隱藏欄位（沿用原流程） -->
+        <input type="hidden" name="title" id="input-title" />
+        <input type="hidden" name="artist" id="input-artist" />
+
+        <label>Why do you recommend it? (optional)</label>
+        <textarea name="reason" id="input-reason" rows="3" placeholder="Short reason..."></textarea>
+
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn" type="button" id="btn-autofill">AutoFill</button>
+          <button class="btn" type="submit">Post & Draw</button>
+        </div>
+      </form>
+      <div id="draw-result" class="draw-area" style="display:none;"></div>
+    </div></div>
+  {% endif %}
+
+  <!-- Boot-data：輸出暱稱 -->
+  <script id="boot-data" type="application/json">
+    {{ {'nickname': (user.nickname if user else None)} | tojson }}
+  </script>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+
+    const form        = document.getElementById('post-form');
+    const linkInput   = document.getElementById('input-link');
+    const titleInput  = document.getElementById('input-title');
+    const artistInput = document.getElementById('input-artist');
+    const reasonInput = document.getElementById('input-reason');
+
+    // 預覽卡元素（照片版）
+    const card       = document.getElementById('preview-polaroid');
+    const winEl      = document.getElementById('preview-window');
+    const imgEl      = document.getElementById('preview-thumb');
+    const lineEl     = document.getElementById('preview-songline');
+    const zhEl       = lineEl?.querySelector('.zh');
+    const enEl       = lineEl?.querySelector('.en');
+    const sepEl      = lineEl?.querySelector('.sep');
+
+    // 使用者暱稱
+    const boot     = JSON.parse(document.getElementById('boot-data').textContent);
+    const nickname = boot.nickname || '';
+
+    // 縮圖寫入（雙保險）
+    function setThumbnail(url){
+      if (!url) { imgEl.removeAttribute('src'); winEl.style.backgroundImage=''; return; }
+      imgEl.src = url;
+      winEl.style.backgroundImage = 'url(' + url + ')';
+    }
+    // 文字寫入
+    function setTitleArtist(title, artist){
+      const t = (title || '(No title)').trim();
+      const a = (artist || '').trim();
+      if (zhEl) zhEl.textContent = t;
+      if (enEl) enEl.textContent = a;
+      if (sepEl) sepEl.style.display = a ? '' : 'none';
+    }
+
+    // AutoFill 主流程（沿用你的 /autofill 後端）
+    async function doAutofill() {
+      const link = (linkInput?.value || '').trim();
+      if (!link) { alert('請先貼上連結'); return; }
+
+      const resp = await fetch('{{ url_for("autofill") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link })
+      });
+      const data = await resp.json();
+      if (!data.ok) { alert(data.error || 'AutoFill 失敗'); return; }
+      const m = data.meta || {};
+
+      // 帶入隱藏欄位
+      titleInput.value  = m.title  || '';
+      artistInput.value = m.artist || '';
+
+      // 縮圖
+      if (m.thumbnail) {
+        setThumbnail(m.thumbnail);
+      } else {
+        setThumbnail('');
+      }
+
+      // 歌名—歌手（上面黃字）
+      setTitleArtist(titleInput.value, artistInput.value);
+
+      // 翻面（由背面 → 正面）
+      card.classList.add('flip');
+    }
+
+    // 綁定
+    if (document.getElementById('btn-autofill')) {
+      document.getElementById('btn-autofill').addEventListener('click', doAutofill);
+    }
+    if (linkInput) {
+      linkInput.addEventListener('change', doAutofill);
+    }
+    if (reasonInput) {
+      // 你如果之後要把推薦理由印在卡面，可在這裡即時同步
+    }
+
+    // 提交表單 → 抽卡展示（維持原本流程，但卡片改成照片版）
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const resp = await fetch(form.action, { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!data.ok) {
+          alert(data.error || 'Error');
+          return;
+        }
+
+        const resultDiv = document.getElementById('draw-result');
+        resultDiv.style.display = 'block';
+
+        if (data.drawn) {
+          const d = data.drawn;
+          const signer    = d.nickname ? d.nickname : '';
+          const reasonTxt = d.reason   ? d.reason   : '';
+          const titleTxt  = d.title    ? d.title    : '';
+          const artistTxt = d.artist   ? d.artist   : '';
+          const bgStyle   = d.thumbnail ? ' style="background-image:url(' + d.thumbnail + ')"' : '';
+
+          // 照片版 Polaroid（與預覽一致）
+          resultDiv.innerHTML = `
             <div class="polaroid-container">
-                <div class="polaroid instax-mini" id="preview-polaroid">
-                    <div class="polaroid-face back">
-                        <div class="back-card">
-                            <div class="back-strip top"></div>
-                            <div class="back-strip bottom"></div>
-                            <div class="back-dash">Paste Link</div>
-                            <div class="back-brand">
-                                <span>NewMood</span><span>NewMood</span><span>NewMood</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="polaroid-face front">
-                        <div class="frame">
-                            <div class="photo">
-                                <div class="cover" id="preview-cover">
-                                    <span class="cover-icon" id="cover-icon">🎵</span>
-                                </div>
-                                <div class="overlay-title" id="overlay-title">Title — Artist</div>
-                            </div>
-                            <div class="info">
-                                <div class="signer" id="signer-name">YOUR NAME</div>
-                                <div class="reason" id="reason-text"></div>
-                                <div class="brand-mark">NewMood</div>
-                            </div>
-                        </div>
-                    </div>
+              <div class="polaroid" id="draw-polaroid">
+                <div class="face back"></div>
+                <div class="face front">
+                  <div class="window"${bgStyle}>
+                    ${d.thumbnail ? '<img alt="thumb" src="'+d.thumbnail+'"/>' : '<img alt="thumb" />'}
+                  </div>
+                  <div class="song-line">
+                    <span class="zh">${titleTxt || '(No title)'}</span>
+                    <span class="sep"${artistTxt ? '' : ' style="display:none;"'}> — </span>
+                    <span class="en">${artistTxt || ''}</span>
+                  </div>
                 </div>
+              </div>
             </div>
-        </div>
-
-        {% if not user %}
-        <div class="sticky-wrap"><div class="sticky yellow">
-            <p>Login to post your song and draw a random pick from others.</p>
-            <a class="btn" href="{{ url_for('login') }}">Login with Google</a>
-        </div></div>
-        {% else %}
-        <div class="sticky-wrap"><div class="sticky blue" style="background:transparent;border:none;box-shadow:none;">
-            <form id="post-form" method="post" action="{{ url_for('submit') }}">
-                <input type="hidden" name="title" id="input-title" />
-                <input type="hidden" name="artist" id="input-artist" />
-
-                <div class="form-row">
-                    <input type="url" name="link" id="input-link" class="input-url"
-                            placeholder="SONG LINK（YouTube Music / Spotify / Apple Music）" />
-                    <button class="btn-yellow" type="button" id="btn-autofill">FILL</button>
-                </div>
-
-                <div class="quick-links">
-                    <span class="quick-label">LINK TO：</span>
-                    <a class="quick-btn yt" href="https://music.youtube.com" target="_blank" rel="noopener" aria-label="YouTube Music"></a>
-                    <a class="quick-btn sp" href="https://open.spotify.com" target="_blank" rel="noopener" aria-label="Spotify"></a>
-                    <a class="quick-btn am" href="https://music.apple.com" target="_blank" rel="noopener" aria-label="Apple Music"></a>
-                </div>
-
-                <div class="textarea-row">
-                    <textarea name="reason" id="input-reason" rows="4"
-                        placeholder="WHY DO YOU RECOMMEND IT ? (Optional)"></textarea>
-                </div>
-
-                <div class="submit-row">
-                    <button class="btn-pill" type="submit">Post & Draw</button>
-                </div>
-            </form>
-
-            <div id="draw-result" class="draw-area" style="display:none;"></div>
-        </div></div>
-        {% endif %}
-
-        <script id="boot-data" type="application/json">
-            {{ {'nickname': (user.nickname if user else None)} | tojson }}
-        </script>
-    </main>
-
-    <script>
-        const $ = (s) => document.querySelector(s);
-        const form = document.getElementById('post-form');
-        const linkInput = document.getElementById('input-link');
-        const titleInput = document.getElementById('input-title');
-        const artistInput = document.getElementById('input-artist');
-        const reasonInput = document.getElementById('input-reason');
-
-        // 預覽元件
-        const preview    = document.getElementById('preview-polaroid');
-        const cover      = document.getElementById('preview-cover');
-        const coverIcon  = document.getElementById('cover-icon');
-        const overlay    = document.getElementById('overlay-title');
-        const signerEl   = document.getElementById('signer-name');
-        const reasonEl   = document.getElementById('reason-text');
-
-        // 暱稱
-        const boot = JSON.parse(document.getElementById('boot-data').textContent);
-        const nickname = boot.nickname || '';
-
-        // 自動填入
-        async function doAutofill() {
-            const link = (linkInput.value || '').trim();
-            if (!link) { alert('請先貼上連結'); return; }
-
-            const resp = await fetch('{{ url_for("autofill") }}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ link })
-            });
-            const data = await resp.json();
-            if (!data.ok) { alert(data.error || 'AutoFill 失敗'); return; }
-            const m = data.meta || {};
-
-            // 隱藏欄位
-            if (m.title)  titleInput.value  = m.title;
-            if (m.artist) artistInput.value = m.artist;
-
-            // 圖片
-            if (m.thumbnail) {
-                cover.style.backgroundImage = 'url(' + m.thumbnail + ')';
-                coverIcon.style.display = 'none';
-            } else {
-                cover.style.backgroundImage = '';
-                coverIcon.style.display = '';
-            }
-
-            // 覆蓋標題：Title — Artist（黃色斜體）
-            const t = titleInput.value || '(No title)';
-            const a = artistInput.value || '';
-            overlay.textContent = a ? `${t} — ${a}` : t;
-
-            // 推薦人 / 理由
-            signerEl.textContent = nickname || '';
-            reasonEl.textContent = reasonInput.value || '';
-
-            // 翻轉動畫（加一圈旋轉）
-            preview.classList.remove('flip','spin');
-            void preview.offsetWidth; // 重新觸發動畫
-            preview.classList.add('flip','spin');
+            <div style="margin-top:8px; text-align:center;">
+              ${signer ? '<div><strong>'+signer+'</strong></div>' : ''}
+              ${reasonTxt ? '<div>'+reasonTxt+(d.link ? ' <span class="play-link"><a href="'+d.link+'" target="_blank" rel="noopener">Play</a></span>' : '')+'</div>' : (d.link ? '<div class="play-link"><a href="'+d.link+'" target="_blank" rel="noopener">Play</a></div>' : '')}
+            </div>
+          `;
+          setTimeout(() => {
+            const p = document.getElementById('draw-polaroid');
+            if (p) p.classList.add('flip');
+          }, 200);
+        } else {
+          resultDiv.textContent = 'No other songs yet—invite friends!';
         }
 
-        // 綁定
-        const btnAuto = document.getElementById('btn-autofill');
-        if (btnAuto) btnAuto.addEventListener('click', doAutofill);
-        if (linkInput) linkInput.addEventListener('change', doAutofill);
-        if (reasonInput) {
-            reasonInput.addEventListener('input', () => {
-                reasonEl.textContent = reasonInput.value || '';
-            });
-        }
-
-        // 提交 → 抽卡展示（維持原流程；卡片樣式沿用本頁）
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const fd = new FormData(form);
-                const resp = await fetch(form.action, { method: 'POST', body: fd });
-                const data = await resp.json();
-                if (!data.ok) { alert(data.error || 'Error'); return; }
-
-                const resultDiv = document.getElementById('draw-result');
-                resultDiv.style.display = 'block';
-
-                if (data.drawn) {
-                    const d = data.drawn;
-                    const signer      = d.nickname ? d.nickname : '';
-                    const reasonTxt = d.reason   ? d.reason   : '';
-                    const bgStyle   = d.thumbnail ? ' style="background-image:url(' + d.thumbnail + ')"' : '';
-
-                    resultDiv.innerHTML = `
-                    <div class="polaroid-container">
-                        <div class="polaroid instax-mini" id="draw-polaroid">
-                            <div class="polaroid-face back">
-                                <div class="back-card">
-                                    <div class="back-strip top"></div>
-                                    <div class="back-strip bottom"></div>
-                                    <div class="back-dash">Play</div>
-                                    <div class="back-brand"><span>NewMood</span><span>NewMood</span><span>NewMood</span></div>
-                                </div>
-                            </div>
-                            <div class="polaroid-face front">
-                                <div class="frame">
-                                    <div class="photo">
-                                        <div class="cover"${bgStyle}>${d.thumbnail ? '' : '<span class="cover-icon">🎵</span>'}</div>
-                                        <div class="overlay-title">${d.title}${d.artist ? ' — ' + d.artist : ''}</div>
-                                    </div>
-                                    <div class="info">
-                                        <div class="signer">${signer}</div>
-                                        <div class="reason">${reasonTxt}${d.link ? ' <span class="play-link"><a href="'+d.link+'" target="_blank" rel="noopener">Play</a></span>' : ''}</div>
-                                        <div class="brand-mark">NewMood</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-
-                    setTimeout(() => {
-                        const p = document.getElementById('draw-polaroid');
-                        if (p) { p.classList.add('flip','spin'); }
-                    }, 200);
-                } else {
-                    resultDiv.textContent = 'No other songs yet—invite friends!';
-                }
-
-                form.reset();
-            });
-        }
-    </script>
-</body>
-</html>
+        form.reset();
+      });
+    }
+  </script>
+{% endblock %}
